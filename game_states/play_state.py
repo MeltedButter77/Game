@@ -1,5 +1,5 @@
 import pygame
-from game_states.base_state import BaseState
+from game_states.states import BaseState, StateTransition
 
 
 class PlayState(BaseState):
@@ -9,11 +9,11 @@ class PlayState(BaseState):
     def handle_events(self, events):
         for event in events:
             if event.type == pygame.QUIT:
-                self.next_state = "quit"
+                self.next_transition = StateTransition("quit")
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    self.next_state = "pause_game"
+                    self.next_transition = StateTransition("push", "menu", {"submenu": "pause"})
 
     def update(self, delta_time):
         pass

@@ -2,7 +2,7 @@ import math
 import json
 import pygame
 from camera_class import Camera
-from game_states.base_state import BaseState
+from game_states.states import BaseState, StateTransition
 
 
 class Block(pygame.sprite.Sprite):
@@ -139,9 +139,12 @@ class EditorState(BaseState):
             self._handle_block_editing(event)
 
             if event.type == pygame.QUIT:
-                self.next_state = "quit"
+                self.next_transition = StateTransition("quit")
 
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.next_transition = StateTransition("push", "menu", {"submenu": "pause"})
+
                 if event.key == pygame.K_k:
                     self.save_level()
                 if event.key == pygame.K_l:

@@ -1,6 +1,7 @@
 import pygame
 import pygame_gui
-from game_states.base_state import BaseState
+from game_states.states import BaseState
+from game_states.states import StateTransition
 
 # TODO:
 # Add layered menus:
@@ -148,50 +149,51 @@ class MenuState(BaseState):
     def handle_events(self, events):
         for event in events:
             if event.type == pygame.QUIT:
-                self.next_state = "quit"
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    self.next_state = "resume_game"
+                self.next_transition = StateTransition("quit")
 
-            if event.type == pygame_gui.UI_BUTTON_PRESSED:
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.next_transition = StateTransition("pop")  # Assuming ESC resumes game via pop
+
+            elif event.type == pygame_gui.UI_BUTTON_PRESSED:
                 # Main menu buttons
                 if event.ui_element == self.main_buttons["play"]:
-                    self.next_state = "play"
-                elif event.ui_element == self.main_buttons["quit"]:
-                    self.next_state = "quit"
+                    self.next_transition = StateTransition("switch", "play")
+                elif event.ui_element == self.main_buttons["editor"]:
+                    self.next_transition = StateTransition("switch", "editor")
                 elif event.ui_element == self.main_buttons["settings"]:
-                    self.switch_menu("settings")
-                if event.ui_element == self.main_buttons["editor"]:
-                    self.next_state = "editor"
+                    self.next_transition = StateTransition("push", "menu", {"submenu": "settings"})
+                elif event.ui_element == self.main_buttons["quit"]:
+                    self.next_transition = StateTransition("quit")
 
                 # Settings menu buttons
                 elif event.ui_element == self.settings_buttons["back"]:
-                    self.switch_menu("main")
+                    self.next_transition = StateTransition("pop")
                 elif event.ui_element == self.settings_buttons["fullscreen"]:
-                    self.context["screen"] = pygame.display.set_mode(self.context["game_size"], pygame.FULLSCREEN)
+                    self.next_transition = StateTransition("setting_change", data="fullscreen")
                 elif event.ui_element == self.settings_buttons["windowed"]:
-                    self.context["screen"] = pygame.display.set_mode(self.context["game_size"], pygame.SCALED | pygame.RESIZABLE)
+                    self.next_transition = StateTransition("setting_change", data="windowed")
 
                 # Pause menu buttons
                 elif event.ui_element == self.pause_buttons["resume"]:
-                    self.next_state = "resume_game"
+                    self.next_transition = StateTransition("pop")
                 elif event.ui_element == self.pause_buttons["save"]:
-                    self.next_state = "save_game"
+                    self.next_transition = StateTransition("call", "save_level")
                 elif event.ui_element == self.pause_buttons["main_menu"]:
-                    self.switch_menu("main")
-                    self.next_state = "unload_game"
+                    self.next_transition = StateTransition("pop_all_push", "menu", {"submenu": "main"})
                 elif event.ui_element == self.pause_buttons["settings"]:
-                    self.switch_menu("pause_settings")
+                    self.next_transition = StateTransition("push", "menu", {"submenu": "pause_settings"})
                 elif event.ui_element == self.pause_buttons["quit"]:
-                    self.next_state = "quit"
+                    self.next_transition = StateTransition("quit")
 
                 # Pause settings menu buttons
                 elif event.ui_element == self.pause_settings_buttons["back"]:
-                    self.switch_menu("pause")
+                    self.next_transition = StateTransition("pop")
                 elif event.ui_element == self.pause_settings_buttons["fullscreen"]:
                     self.context["screen"] = pygame.display.set_mode(self.context["game_size"], pygame.FULLSCREEN)
                 elif event.ui_element == self.pause_settings_buttons["windowed"]:
-                    self.context["screen"] = pygame.display.set_mode(self.context["game_size"], pygame.SCALED | pygame.RESIZABLE)
+                    self.context["screen"] = pygame.display.set_mode(self.context["game_size"],
+                                                                     pygame.SCALED | pygame.RESIZABLE)
 
             self.ui_manager.process_events(event)
 

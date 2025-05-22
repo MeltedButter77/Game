@@ -9,6 +9,13 @@ from game_states.play_state import PlayState
 WIDTH, HEIGHT = 1280, 720  # Use 320x180 or multiples
 
 
+class StateTransition:
+    def __init__(self, type_, target=None, data=None):
+        self.type = type_          # e.g., "push", "pop", "switch", "quit"
+        self.target = target       # e.g., "editor", "menu"
+        self.data = data or {}     # Optional extra info
+
+
 class GameApp:
     def __init__(self):
         pygame.init()
@@ -44,27 +51,47 @@ class GameApp:
 
     def _handle_state_transitions(self):
         current_state = self.state_stack[-1]
-        next_state = current_state.next_state
+        transition = getattr(current_state, "next_transition", None)
 
-        if next_state == "quit":
+        if not transition:
+            return
+
+        if transition.type == "quit":
             self.running = False
 
-        elif next_state == "pause_game":
-            self.state_stack.append(self.state_instances["menu"])
-            self.state_instances["menu"].switch_menu("pause")
-        elif next_state == "resume_game":
+        elif transition.type == "switch":
+            self.state_stack[-1] = self.state_instances[transition.target]
+
+        elif transition.type == "push":
+            state = self.state_instances[transition.target]
+            if "submenu" in transition.data and hasattr(state, "switch_menu"):
+                state.switch_menu(transition.data["submenu"])
+            self.state_stack.append(state)  # Add the new state to front of stack
+
+        elif transition.type == "pop_all_push":
+            self.state_stack.clear()
+            state = self.state_instances[transition.target]
+            if "submenu" in transition.data and hasattr(state, "switch_menu"):
+                state.switch_menu(transition.data["submenu"])
+            self.state_stack.append(state)  # Add the new state to front of stack
+
+        elif transition.type == "setting_change":
+            if "fullscreen" in transition.data:
+                self.screen = pygame.display.set_mode(self.game_context["game_size"], pygame.FULLSCREEN)
+            if "windowed" in transition.data:
+                self.screen = pygame.display.set_mode(self.game_context["game_size"], pygame.SCALED | pygame.RESIZABLE)
+
+        elif transition.type == "pop":
             self.state_stack.pop()
-        elif next_state == "unload_game":
-            self.state_stack.pop(0)
-        elif next_state == "save_game":
-            self.state_stack[0].save_level()
 
-        elif next_state:
-            self.state_stack[-1] = self.state_instances[next_state]
+        # Call a method on the current state. Can be used in menus to run a method when a button is pressed. Used for Save and Load buttons
+        elif transition.type == "call":
+            method = getattr(self.state_stack[0], transition.target)
+            if callable(method):
+                method(**transition.data)
 
-        # Always reset next_state
-        if self.state_stack:
-            self.state_stack[-1].next_state = None
+        # Always reset transition
+        self.state_stack[-1].next_transition = None
 
     def _update(self):
         time_delta = self.clock.tick(60) / 1000.0
