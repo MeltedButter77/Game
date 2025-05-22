@@ -1,7 +1,6 @@
 import asyncio
 import pygame
 import pygame_gui
-
 from game_states.editor_state import EditorState
 from game_states.menu_state import MenuState
 from game_states.play_state import PlayState
@@ -11,8 +10,8 @@ WIDTH, HEIGHT = 1280, 720  # Use 320x180 or multiples
 
 class StateTransition:
     def __init__(self, type_, target=None, data=None):
-        self.type = type_          # e.g., "push", "pop", "switch", "quit"
-        self.target = target       # e.g., "editor", "menu"
+        self.type = type_          # "push", "pop", "switch", "quit"
+        self.target = target       # "editor", "menu"
         self.data = data or {}     # Optional extra info
 
 

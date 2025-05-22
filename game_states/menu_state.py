@@ -1,11 +1,6 @@
 import pygame
 import pygame_gui
-from game_states.states import BaseState
-from game_states.states import StateTransition
-
-# TODO:
-# Add layered menus:
-# -> Child menus currently have to be duplicated if accessed from a different parent menu to preserve proper back navigation
+from game_states.states import BaseState, StateTransition
 
 
 class MenuState(BaseState):
@@ -13,189 +8,131 @@ class MenuState(BaseState):
         super().__init__(context)
 
         self.ui_manager = context["ui_manager"]
-        self.active_menu = "main"
+        self.menu_stack = []
 
-        # Main menu panel
-        self.ui_panels = {
-            "main": pygame_gui.elements.UIPanel(
-                relative_rect=pygame.Rect((440, 160), (400, 400)),
-                manager=self.ui_manager
-            ),
-            "settings": pygame_gui.elements.UIPanel(
-                relative_rect=pygame.Rect((440, 160), (400, 400)),
-                manager=self.ui_manager
-            ),
-            "pause": pygame_gui.elements.UIPanel(
-                relative_rect=pygame.Rect((440, 160), (400, 400)),
-                manager=self.ui_manager
-            ),
-            "pause_settings": pygame_gui.elements.UIPanel(
-                relative_rect=pygame.Rect((440, 160), (400, 400)),
-                manager=self.ui_manager
-            ),
+        # Panels for each menu
+        self.panel = pygame_gui.elements.UIPanel(
+            relative_rect=pygame.Rect((440, 160), (400, 400)),
+            manager=self.ui_manager
+        )
+
+        self.all_buttons = {}
+        self.build_menus()
+        self.push_menu("main")
+
+    def build_menus(self):
+        self.all_buttons = {
+            "main": {
+                "play": self._add_button("Play", (100, 20)),
+                "editor": self._add_button("Editor", (100, 80)),
+                "settings": self._add_button("Settings", (100, 140)),
+                "quit": self._add_button("Quit", (100, 320))
+            },
+            "pause": {
+                "resume": self._add_button("Resume", (100, 20)),
+                "save": self._add_button("Save", (100, 80)),
+                "settings": self._add_button("Settings", (100, 140)),
+                "main_menu": self._add_button("Main Menu", (100, 260)),
+                "quit": self._add_button("Quit", (100, 320))
+            },
+            "settings": {
+                "fullscreen": self._add_button("Fullscreen (wip)", (100, 80)),
+                "windowed": self._add_button("Windowed", (100, 140)),
+                "back": self._add_button("Back", (100, 260))
+            },
+            "level_select": {
+                "1": self._add_button("Level 1", (100, 80)),
+                "2": self._add_button("Level 2", (100, 140)),
+                "3": self._add_button("Level 3", (100, 200))
+            },
         }
 
-        self.main_buttons = {
-            "play": pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((100, 20), (200, 40)),
-                text='Play',
-                manager=self.ui_manager,
-                container=self.ui_panels["main"]
-            ),
-            "editor": pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((100, 80), (200, 40)),
-                text='Editor',
-                manager=self.ui_manager,
-                container=self.ui_panels["main"]
-            ),
-            "settings": pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((100, 140), (200, 40)),
-                text='Settings',
-                manager=self.ui_manager,
-                container=self.ui_panels["main"]
-            ),
-            "quit": pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((100, 320), (200, 40)),
-                text='Quit',
-                manager=self.ui_manager,
-                container=self.ui_panels["main"]
-            ),
-        }
-
-        self.settings_buttons = {
-            "fullscreen": pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((100, 80), (200, 40)),
-                text='Fullscreen (wip)',
-                manager=self.ui_manager,
-                container=self.ui_panels["settings"]
-            ),
-            "windowed": pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((100, 140), (200, 40)),
-                text='Windowed',
-                manager=self.ui_manager,
-                container=self.ui_panels["settings"]
-            ),
-            "back": pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((100, 260), (200, 40)),
-                text='Back',
-                manager=self.ui_manager,
-                container=self.ui_panels["settings"]
-            ),
-        }
-
-        self.pause_buttons = {
-            "resume": pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((100, 20), (200, 40)),
-                text='Resume',
-                manager=self.ui_manager,
-                container=self.ui_panels["pause"]
-            ),
-            "save": pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((100, 80), (200, 40)),
-                text='Save',
-                manager=self.ui_manager,
-                container=self.ui_panels["pause"]
-            ),
-            "settings": pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((100, 140), (200, 40)),
-                text='Settings',
-                manager=self.ui_manager,
-                container=self.ui_panels["pause"]
-            ),
-            "main_menu": pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((100, 260), (200, 40)),
-                text='Main Menu',
-                manager=self.ui_manager,
-                container=self.ui_panels["pause"]
-            ),
-            "quit": pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((100, 320), (200, 40)),
-                text='Quit',
-                manager=self.ui_manager,
-                container=self.ui_panels["pause"]
-            ),
-        }
-
-        self.pause_settings_buttons = {
-            "fullscreen": pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((100, 80), (200, 40)),
-                text='Fullscreen (wip)',
-                manager=self.ui_manager,
-                container=self.ui_panels["pause_settings"]
-            ),
-            "windowed": pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((100, 140), (200, 40)),
-                text='Windowed',
-                manager=self.ui_manager,
-                container=self.ui_panels["pause_settings"]
-            ),
-            "back": pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((100, 260), (200, 40)),
-                text='Back',
-                manager=self.ui_manager,
-                container=self.ui_panels["pause_settings"]
-            ),
-        }
-
-        self.switch_menu(self.active_menu)
+    def _add_button(self, text, pos):
+        return pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(pos, (200, 40)),
+            text=text,
+            manager=self.ui_manager,
+            container=self.panel
+        )
 
     def switch_menu(self, menu_name):
-        self.active_menu = menu_name
-        for panel in self.ui_panels.values():
-            panel.hide()
+        if self.menu_stack:
+            self.menu_stack[-1] = menu_name
+        else:
+            self.menu_stack.append(menu_name)
+        self._refresh_buttons()
 
-        self.ui_panels[menu_name].show()
+    def push_menu(self, menu_name):
+        self.menu_stack.append(menu_name)
+        self._refresh_buttons()
+
+    def pop_menu(self):
+        if self.menu_stack:
+            self.menu_stack.pop()
+        self._refresh_buttons()
+
+    def _refresh_buttons(self):
+        # Hide all buttons
+        for menu in self.all_buttons.values():
+            for button in menu.values():
+                button.hide()
+
+        if self.menu_stack:
+            current = self.menu_stack[-1]
+            for button in self.all_buttons.get(current, {}).values():
+                button.show()
+        self.panel.show() if self.menu_stack else self.panel.hide()
 
     def handle_events(self, events):
         for event in events:
             if event.type == pygame.QUIT:
                 self.next_transition = StateTransition("quit")
-
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    self.next_transition = StateTransition("pop")  # Assuming ESC resumes game via pop
-
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                self.next_transition = StateTransition("pop")
             elif event.type == pygame_gui.UI_BUTTON_PRESSED:
-                # Main menu buttons
-                if event.ui_element == self.main_buttons["play"]:
-                    self.next_transition = StateTransition("switch", "play")
-                elif event.ui_element == self.main_buttons["editor"]:
-                    self.next_transition = StateTransition("switch", "editor")
-                elif event.ui_element == self.main_buttons["settings"]:
-                    self.next_transition = StateTransition("push", "menu", {"submenu": "settings"})
-                elif event.ui_element == self.main_buttons["quit"]:
-                    self.next_transition = StateTransition("quit")
-
-                # Settings menu buttons
-                elif event.ui_element == self.settings_buttons["back"]:
-                    self.next_transition = StateTransition("pop")
-                elif event.ui_element == self.settings_buttons["fullscreen"]:
-                    self.next_transition = StateTransition("setting_change", data="fullscreen")
-                elif event.ui_element == self.settings_buttons["windowed"]:
-                    self.next_transition = StateTransition("setting_change", data="windowed")
-
-                # Pause menu buttons
-                elif event.ui_element == self.pause_buttons["resume"]:
-                    self.next_transition = StateTransition("pop")
-                elif event.ui_element == self.pause_buttons["save"]:
-                    self.next_transition = StateTransition("call", "save_level")
-                elif event.ui_element == self.pause_buttons["main_menu"]:
-                    self.next_transition = StateTransition("pop_all_push", "menu", {"submenu": "main"})
-                elif event.ui_element == self.pause_buttons["settings"]:
-                    self.next_transition = StateTransition("push", "menu", {"submenu": "pause_settings"})
-                elif event.ui_element == self.pause_buttons["quit"]:
-                    self.next_transition = StateTransition("quit")
-
-                # Pause settings menu buttons
-                elif event.ui_element == self.pause_settings_buttons["back"]:
-                    self.next_transition = StateTransition("pop")
-                elif event.ui_element == self.pause_settings_buttons["fullscreen"]:
-                    self.context["screen"] = pygame.display.set_mode(self.context["game_size"], pygame.FULLSCREEN)
-                elif event.ui_element == self.pause_settings_buttons["windowed"]:
-                    self.context["screen"] = pygame.display.set_mode(self.context["game_size"],
-                                                                     pygame.SCALED | pygame.RESIZABLE)
+                self._handle_button_event(event.ui_element)
 
             self.ui_manager.process_events(event)
+
+    def _handle_button_event(self, element):
+        current_menu = self.menu_stack[-1] if self.menu_stack else None
+        if current_menu == "main":
+            if element == self.all_buttons["main"]["play"]:
+                self.push_menu("level_select")
+            elif element == self.all_buttons["main"]["editor"]:
+                self.next_transition = StateTransition("switch", "editor")
+            elif element == self.all_buttons["main"]["settings"]:
+                self.push_menu("settings")
+            elif element == self.all_buttons["main"]["quit"]:
+                self.next_transition = StateTransition("quit")
+
+        elif current_menu == "pause":
+            if element == self.all_buttons["pause"]["resume"]:
+                self.next_transition = StateTransition("pop")
+            elif element == self.all_buttons["pause"]["save"]:
+                self.next_transition = StateTransition("call", "save_level")
+            elif element == self.all_buttons["pause"]["settings"]:
+                self.push_menu("settings")
+            elif element == self.all_buttons["pause"]["main_menu"]:
+                self.next_transition = StateTransition("pop_all_push", "menu", {"submenu": "main"})
+            elif element == self.all_buttons["pause"]["quit"]:
+                self.next_transition = StateTransition("quit")
+
+        elif current_menu == "settings":
+            if element == self.all_buttons["settings"]["fullscreen"]:
+                self.next_transition = StateTransition("setting_change", data="fullscreen")
+            elif element == self.all_buttons["settings"]["windowed"]:
+                self.next_transition = StateTransition("setting_change", data="windowed")
+            elif element == self.all_buttons["settings"]["back"]:
+                self.pop_menu()
+
+        elif current_menu == "level_select":
+            if element == self.all_buttons["level_select"]["1"]:
+                self.next_transition = StateTransition("push", "play", {"level": 1})
+            elif element == self.all_buttons["level_select"]["2"]:
+                self.next_transition = StateTransition("push", "play", {"level": 2})
+            elif element == self.all_buttons["level_select"]["3"]:
+                self.next_transition = StateTransition("push", "play", {"level": 3})
 
     def update(self, time_delta):
         self.ui_manager.update(time_delta)

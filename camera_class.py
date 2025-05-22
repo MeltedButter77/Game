@@ -10,7 +10,7 @@ class Camera:
         self.y = 0
         self.speed = 10
         self.zoom = 1.0
-        self.min_zoom = 0.1
+        self.min_zoom = 0.3
         self.max_zoom = 10
         self.pan_start_location = None
 

@@ -95,7 +95,7 @@ class EditorState(BaseState):
 
     def save_level(self):
         # Save block data as JSON
-        with open("level.json", "w") as f:
+        with open("levels/level.json", "w") as f:
             data = {
                 "blocks": [
                     {
@@ -123,7 +123,7 @@ class EditorState(BaseState):
 
     def load_level(self):
         # Load block data from JSON
-        with open("level.json", "r") as f:
+        with open("levels/level.json", "r") as f:
             data = json.load(f)
             self.blocks.empty()
             for block_data in data["blocks"]:
@@ -132,6 +132,8 @@ class EditorState(BaseState):
                 block.add(self.blocks)
             for player_data in data["players"]:
                 pass
+
+        print("Level loaded from level.json")
 
     def handle_events(self, events):
         for event in events:
