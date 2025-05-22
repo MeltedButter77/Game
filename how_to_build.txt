@@ -1,0 +1,5 @@
+For web using PygBag
+pygbag --build your_project_folder
+
+For a .exe
+pyinstaller main.spec
