@@ -157,7 +157,7 @@ class MenuState(BaseState):
             for i in range(1, 4):
                 if element == self.all_buttons["level_select"][str(i)]:
                     self.level_select_data["level"] = i
-                    self.next_transitions = [StateTransition("push", "play", {"level_select_data": self.level_select_data})]
+                    self.next_transitions = [StateTransition("push", "game", {"level_select_data": self.level_select_data})]
                     self.menu_stack.clear()
                     break
         print(self.menu_stack)

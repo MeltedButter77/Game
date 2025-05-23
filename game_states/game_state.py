@@ -2,7 +2,7 @@ import pygame
 from game_states.states import BaseState, StateTransition
 
 
-class PlayState(BaseState):
+class GameState(BaseState):
     def __init__(self, context):
         super().__init__(context)
 
