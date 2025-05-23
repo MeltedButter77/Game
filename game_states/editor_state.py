@@ -121,7 +121,7 @@ class EditorState(BaseState):
 
         print("Level saved to level.json")
 
-    def load_level(self):
+    def load_level(self, player_count, world, level):
         # Load block data from JSON
         with open("levels/level.json", "r") as f:
             data = json.load(f)
@@ -145,10 +145,8 @@ class EditorState(BaseState):
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    self.next_transitions = [StateTransition("push", "menu", {"submenu": "pause"})]
+                    self.next_transitions = [StateTransition("push", "menu", {"submenu": "editor_pause"})]
 
-                if event.key == pygame.K_k:
-                    self.save_level()
                 if event.key == pygame.K_l:
                     self.load_level()
 

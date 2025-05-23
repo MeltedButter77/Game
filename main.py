@@ -3,13 +3,13 @@ import pygame
 import pygame_gui
 from game_states.editor_state import EditorState
 from game_states.menu_state import MenuState
-from game_states.play_state import PlayState
+from game_states.game_state import GameState
 
 WIDTH, HEIGHT = 1280, 720  # Use 320x180 or multiples
 
 
 class StateTransition:
-    def __init__(self, type_, target=None, data=None):
+    def __init__(self, type_=None, target=None, data=None):
         self.type = type_          # "push", "pop", "switch", "quit"
         self.target = target       # "editor", "menu"
         self.data = data or {}     # Optional extra info
@@ -28,7 +28,7 @@ class GameApp:
         }
         self.state_instances = {
             "menu": MenuState(self.game_context),
-            "play": PlayState(self.game_context),
+            "game": GameState(self.game_context),
             "editor": EditorState(self.game_context),
         }
         self.state_stack = [self.state_instances["menu"]]
@@ -59,14 +59,12 @@ class GameApp:
             if not transition:
                 continue
 
-            if transition.type == "quit":
-                self.running = False
-
-            elif transition.type == "switch":
-                self.state_stack[-1] = self.state_instances[transition.target]
-
-            elif transition.type == "push":
-                state = self.state_instances[transition.target]
+            # Run custom actions from transition.data
+            if transition.data:
+                if transition.target:
+                    state = self.state_instances[transition.target]
+                else:
+                    state = self.state_stack[-1]
 
                 # Custom actions depending on transition.data
                 if "submenu" in transition.data and hasattr(state, "switch_menu"):
@@ -75,6 +73,15 @@ class GameApp:
                     data = transition.data.get("level_select_data")
                     state.load_level(data["players"], data["world"], data["level"])
 
+            if transition.type == "quit":
+                self.running = False
+
+            elif transition.type == "switch":
+                state = self.state_instances[transition.target]
+                self.state_stack[-1] = state
+
+            elif transition.type == "push":
+                state = self.state_instances[transition.target]
                 self.state_stack.append(state)  # Add the new state to front of stack
 
             elif transition.type == "setting_change":
@@ -98,6 +105,7 @@ class GameApp:
                     method(**transition.data)
 
         # Always reset transition
+        print(self.state_stack)
         self.state_stack[-1].next_transitions = None
 
     def _update(self):
@@ -105,7 +113,7 @@ class GameApp:
         self.state_stack[-1].update(time_delta)
 
     def _render(self):
-        self.screen.fill((0, 0, 0))
+        self.screen.fill("hot pink")  # This is the background behind every state, this should not be seen.
 
         for state in self.state_stack:
             state.render(self.screen)

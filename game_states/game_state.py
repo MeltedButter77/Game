@@ -13,7 +13,7 @@ class GameState(BaseState):
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    self.next_transitions = [StateTransition("push", "menu", {"submenu": "pause"})]
+                    self.next_transitions = [StateTransition("push", "menu", {"submenu": "game_pause"})]
 
     def load_level(self, player_count, world, level):
         pass
