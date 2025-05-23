@@ -1,7 +1,7 @@
 import math
 import json
 import pygame
-from camera_class import Camera
+from game_classes.camera_class import Camera
 from game_states.state_helpers import BaseState, StateTransition, load_level
 from game_classes.block_class import Block
 
@@ -21,6 +21,7 @@ class EditorState(BaseState):
         world_width, world_height = 10000, 10000
         self.render_surface = pygame.Surface((world_width, world_height))
         self.mouse_down_pos = None
+        self.level_info = None
 
         self.game_sprites = {
             "blocks": pygame.sprite.Group(),
@@ -80,6 +81,7 @@ class EditorState(BaseState):
 
                 # Update the size of the most recently created block
                 self.game_sprites["blocks"].sprites()[-1].rect = new_rect
+                self.game_sprites["blocks"].sprites()[-1].update_image()  # Updates size of image to match new rect
 
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:  # The left mouse button released
@@ -96,7 +98,11 @@ class EditorState(BaseState):
             f.write(str(int(level_count + 1)))
 
         # Save block data as JSON
-        with open(f"levels/saved/saved_level_{level_count}.json", "w") as f:
+        location = f"levels/saved/saved_level_{level_count}.json"
+        if self.level_info:
+            location = f"levels/{self.level_info['player_count']}_players/world_{self.level_info['world']}/level_{self.level_info['level']}.json"
+
+        with open(location, "w") as f:
             data = {
                 "blocks": [
                     {
@@ -104,25 +110,27 @@ class EditorState(BaseState):
                         "y": block.rect.y,
                         "width": block.rect.width,
                         "height": block.rect.height,
-                        "color": block.color
+                        "color": "blue"
                     }
                     for block in self.game_sprites["blocks"]
                 ],
                 "players": [
                     {
-                        "name": player.name,
-                        "x": player.x,
-                        "y": player.y,
-                        "health": player.health
+                        "x": player.rect.x,
+                        "y": player.rect.y,
+                        "width": player.rect.width,
+                        "height": player.rect.height,
+                        "color": "red"
                     }
                     for player in self.game_sprites["players"]
                 ],
             }
             json.dump(data, f, indent=4)
 
-        print("Level saved to level.json")
+        print(f"Level saved to " + location)
 
     def load_level(self, player_count, world, level):
+        self.level_info = {"player_count": player_count, "world": world, "level": level}
         load_level(self, player_count, world, level)
 
     def handle_events(self, events):
@@ -143,7 +151,8 @@ class EditorState(BaseState):
     def render(self, screen):
 
         self.render_surface.fill("light pink")
-        for block in self.game_sprites["blocks"]:
-            pygame.draw.rect(self.render_surface, block.color, block.rect)
+        for object_group in self.game_sprites.values():
+            for sprite in object_group.sprites():
+                self.render_surface.blit(sprite.image, sprite.rect)
 
         self.camera.render(screen, self.render_surface)

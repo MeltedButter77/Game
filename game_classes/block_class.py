@@ -9,3 +9,7 @@ class Block(pygame.sprite.Sprite):
 
         self.image = pygame.Surface(rect.size)
         self.image.fill(self.color)
+
+    def update_image(self):
+        self.image = pygame.Surface(self.rect.size)
+        self.image.fill(self.color)

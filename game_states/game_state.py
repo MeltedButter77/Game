@@ -1,10 +1,14 @@
 import pygame
 from game_states.state_helpers import BaseState, StateTransition, load_level
+from game_classes.camera_class import Camera
 
 
 class GameState(BaseState):
     def __init__(self, context):
         super().__init__(context)
+        self.camera = Camera()
+        world_width, world_height = 10000, 10000
+        self.render_surface = pygame.Surface((world_width, world_height))
 
         self.game_sprites = {
             "blocks": pygame.sprite.Group(),
@@ -27,10 +31,20 @@ class GameState(BaseState):
         pass
 
     def update(self, delta_time):
-        pass
+        for player in self.game_sprites["players"].sprites():
+            player.calc_next_pos(self.game_sprites["blocks"].sprites(), render_surface=self.render_surface)
+
+        for player in self.game_sprites["players"].sprites():
+            player.apply_next_pos()
+        self.camera.x = self.game_sprites["players"].sprites()[0].rect.centerx - self.context["game_size"][0] / 2
+        self.camera.y = self.game_sprites["players"].sprites()[0].rect.centery - self.context["game_size"][1] / 2
 
     def render(self, screen):
-        screen.fill("light blue")
+        self.render_surface.fill("light blue")
         for object_group in self.game_sprites.values():
             for sprite in object_group.sprites():
-                screen.blit(sprite.image, sprite.rect)
+                self.render_surface.blit(sprite.image, sprite.rect)
+
+        self.camera.render(screen, self.render_surface)
+
+

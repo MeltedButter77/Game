@@ -1,6 +1,7 @@
 import json
 import pygame
 from game_classes.block_class import Block
+from game_classes.player_class import Player
 
 
 # Shared logic for loading a level
@@ -13,10 +14,12 @@ def load_level(app_state, player_count, world, level):
                 for block_data in data["blocks"]:
                     block = Block(
                         pygame.Rect(block_data["x"], block_data["y"], block_data["width"], block_data["height"]))
-                    block.color = block_data["color"]
+                    block.color = block.image.fill(block_data["color"])
                     block.add(app_state.game_sprites["blocks"])
                 for player_data in data["players"]:
-                    pass
+                    player = Player(pygame.Rect(player_data["x"], player_data["y"], player_data["width"], player_data["height"]))
+                    player.color = player.image.fill(player_data["color"])
+                    player.add(app_state.game_sprites["players"])
 
             print(f"Level loaded from levels/{player_count}_players/world_{world}/level_{level}.json")
         except FileNotFoundError:
