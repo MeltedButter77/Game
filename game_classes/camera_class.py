@@ -14,8 +14,6 @@ class Camera:
         self.max_zoom = 10
         self.pan_start_location = None
 
-        self.render_surface = pygame.surface.Surface((0, 0))
-
         self.controls = controls
 
     def game_pos_to_screen(self, pos):
@@ -79,7 +77,7 @@ class Camera:
 
         subsurface = world_surface.subsurface(camera_view_clamped)
 
-        # Blit subsurface into correct position on final_surface
+        # Blit subsurface into the correct position on final_surface
         blit_pos = (
             camera_view_clamped.x - camera_view.x,
             camera_view_clamped.y - camera_view.y
