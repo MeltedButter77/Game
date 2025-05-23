@@ -34,6 +34,7 @@ class MenuState(BaseState):
                 "resume": self._add_button("Resume", (100, 20)),
                 "save": self._add_button("Save", (100, 80)),
                 "settings": self._add_button("Settings", (100, 140)),
+                "level_select": self._add_button("Level Select", (100, 200)),
                 "main_menu": self._add_button("Main Menu", (100, 260)),
                 "quit": self._add_button("Quit", (100, 320))
             },
@@ -51,20 +52,26 @@ class MenuState(BaseState):
                 "back": self._add_button("Back", (100, 260))
             },
             "player_count_select": {
-                "1": self._add_button("Solo", (100, 80)),
-                "2": self._add_button("2 Players", (100, 140)),
-                "3": self._add_button("3 Players", (100, 200)),
-                "4": self._add_button("4 Players", (100, 260))
+                "1": self._add_button("Solo", (100, 20)),
+                "2": self._add_button("2 Players", (100, 80)),
+                "3": self._add_button("3 Players", (100, 140)),
+                "4": self._add_button("4 Players", (100, 200)),
+                "back": self._add_button("Back", (100, 260)),
+                "main_menu": self._add_button("Main Menu", (100, 320)),
             },
             "world_select": {
-                "1": self._add_button("World 1", (100, 80)),
-                "2": self._add_button("World 2", (100, 140)),
-                "3": self._add_button("World 3", (100, 200))
+                "1": self._add_button("World 1", (100, 20)),
+                "2": self._add_button("World 2", (100, 80)),
+                "3": self._add_button("World 3", (100, 140)),
+                "back": self._add_button("Back", (100, 260)),
+                "main_menu": self._add_button("Main Menu", (100, 320)),
             },
             "level_select": {
-                "1": self._add_button("Level 1", (100, 80)),
-                "2": self._add_button("Level 2", (100, 140)),
-                "3": self._add_button("Level 3", (100, 200))
+                "1": self._add_button("Level 1", (100, 20)),
+                "2": self._add_button("Level 2", (100, 80)),
+                "3": self._add_button("Level 3", (100, 140)),
+                "back": self._add_button("Back", (100, 260)),
+                "main_menu": self._add_button("Main Menu", (100, 320)),
             },
         }
 
@@ -143,7 +150,9 @@ class MenuState(BaseState):
 
             # Game-specific pause menu button logic
             if current_menu == "game_pause":
-                pass
+                if element == self.all_buttons[current_menu]["level_select"]:
+                    self.push_menu("level_select")
+                    print(self.menu_stack)
 
             # Editor-specific pause menu button logic
             if current_menu == "editor_pause":
@@ -159,6 +168,10 @@ class MenuState(BaseState):
                 self.pop_menu()
 
         if current_menu == "player_count_select":
+            if element == self.all_buttons[current_menu]["back"]:
+                self.pop_menu()
+            elif element == self.all_buttons[current_menu]["main_menu"]:
+                self.next_transitions = [StateTransition("clear"), StateTransition("push", "menu", {"submenu": "main"})]
             for i in range(1, 5):
                 if element == self.all_buttons[current_menu][str(i)]:
                     self.level_select_data["players"] = i
@@ -166,6 +179,10 @@ class MenuState(BaseState):
                     break
 
         elif current_menu == "world_select":
+            if element == self.all_buttons[current_menu]["back"]:
+                self.pop_menu()
+            elif element == self.all_buttons[current_menu]["main_menu"]:
+                self.next_transitions = [StateTransition("clear"), StateTransition("push", "menu", {"submenu": "main"})]
             for i in range(1, 4):
                 if element == self.all_buttons[current_menu][str(i)]:
                     self.level_select_data["world"] = i
@@ -173,11 +190,15 @@ class MenuState(BaseState):
                     break
 
         elif current_menu == "level_select":
+            if element == self.all_buttons[current_menu]["back"]:
+                self.pop_menu()
+            elif element == self.all_buttons[current_menu]["main_menu"]:
+                self.next_transitions = [StateTransition("clear"), StateTransition("push", "menu", {"submenu": "main"})]
             for i in range(1, 4):
                 if element == self.all_buttons[current_menu][str(i)]:
                     self.level_select_data["level"] = i
-                    # if the level is selected from main menu load into game_state
-                    if self.menu_stack[0] == "main":
+                    # if the level is selected from the main menu or from in-game
+                    if self.menu_stack[0] == "main" or self.menu_stack[0] == "game_pause":
                         self.next_transitions = [StateTransition("switch", "game", {"level_select_data": self.level_select_data})]
                     # if the level is selected from the editor
                     if self.menu_stack[0] == "editor_pause":

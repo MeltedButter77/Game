@@ -105,7 +105,6 @@ class GameApp:
                     method(**transition.data)
 
         # Always reset transition
-        print(self.state_stack)
         self.state_stack[-1].next_transitions = None
 
     def _update(self):
