@@ -141,11 +141,11 @@ class EditorState(BaseState):
             self._handle_block_editing(event)
 
             if event.type == pygame.QUIT:
-                self.next_transition = StateTransition("quit")
+                self.next_transitions = [StateTransition("quit")]
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    self.next_transition = StateTransition("push", "menu", {"submenu": "pause"})
+                    self.next_transitions = [StateTransition("push", "menu", {"submenu": "pause"})]
 
                 if event.key == pygame.K_k:
                     self.save_level()

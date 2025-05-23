@@ -10,7 +10,7 @@ class StateTransition:
 class BaseState:
     def __init__(self, context):
         self.context = context
-        self.next_transition = None
+        self.next_transitions = None
 
     def handle_events(self, events):
         pass

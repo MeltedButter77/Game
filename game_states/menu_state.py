@@ -20,6 +20,8 @@ class MenuState(BaseState):
         self.build_menus()
         self.push_menu("main")
 
+        self.level_select_data = {"players": 1, "world": 1, "level": 1}
+
     def build_menus(self):
         self.all_buttons = {
             "main": {
@@ -39,6 +41,17 @@ class MenuState(BaseState):
                 "fullscreen": self._add_button("Fullscreen (wip)", (100, 80)),
                 "windowed": self._add_button("Windowed", (100, 140)),
                 "back": self._add_button("Back", (100, 260))
+            },
+            "player_count_select": {
+                "1": self._add_button("Solo", (100, 80)),
+                "2": self._add_button("2 Players", (100, 140)),
+                "3": self._add_button("3 Players", (100, 200)),
+                "4": self._add_button("4 Players", (100, 260))
+            },
+            "world_select": {
+                "1": self._add_button("World 1", (100, 80)),
+                "2": self._add_button("World 2", (100, 140)),
+                "3": self._add_button("World 3", (100, 200))
             },
             "level_select": {
                 "1": self._add_button("Level 1", (100, 80)),
@@ -86,9 +99,9 @@ class MenuState(BaseState):
     def handle_events(self, events):
         for event in events:
             if event.type == pygame.QUIT:
-                self.next_transition = StateTransition("quit")
+                self.next_transitions = [StateTransition("quit")]
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                self.next_transition = StateTransition("pop")
+                self.next_transitions = [StateTransition("pop")]
             elif event.type == pygame_gui.UI_BUTTON_PRESSED:
                 self._handle_button_event(event.ui_element)
 
@@ -98,41 +111,56 @@ class MenuState(BaseState):
         current_menu = self.menu_stack[-1] if self.menu_stack else None
         if current_menu == "main":
             if element == self.all_buttons["main"]["play"]:
-                self.push_menu("level_select")
+                self.push_menu("player_count_select")
             elif element == self.all_buttons["main"]["editor"]:
-                self.next_transition = StateTransition("switch", "editor")
+                self.next_transitions = [StateTransition("switch", "editor")]
             elif element == self.all_buttons["main"]["settings"]:
                 self.push_menu("settings")
             elif element == self.all_buttons["main"]["quit"]:
-                self.next_transition = StateTransition("quit")
+                self.next_transitions = [StateTransition("quit")]
 
         elif current_menu == "pause":
             if element == self.all_buttons["pause"]["resume"]:
-                self.next_transition = StateTransition("pop")
+                self.next_transitions = [StateTransition("pop")]
             elif element == self.all_buttons["pause"]["save"]:
-                self.next_transition = StateTransition("call", "save_level")
+                self.next_transitions = [StateTransition("call", "save_level")]
             elif element == self.all_buttons["pause"]["settings"]:
                 self.push_menu("settings")
             elif element == self.all_buttons["pause"]["main_menu"]:
-                self.next_transition = StateTransition("pop_all_push", "menu", {"submenu": "main"})
+                self.next_transitions = [StateTransition("clear"), StateTransition("push", "menu", {"submenu": "main"})]
             elif element == self.all_buttons["pause"]["quit"]:
-                self.next_transition = StateTransition("quit")
+                self.next_transitions = [StateTransition("quit")]
 
         elif current_menu == "settings":
             if element == self.all_buttons["settings"]["fullscreen"]:
-                self.next_transition = StateTransition("setting_change", data="fullscreen")
+                self.next_transitions = [StateTransition("setting_change", data="fullscreen")]
             elif element == self.all_buttons["settings"]["windowed"]:
-                self.next_transition = StateTransition("setting_change", data="windowed")
+                self.next_transitions = [StateTransition("setting_change", data="windowed")]
             elif element == self.all_buttons["settings"]["back"]:
                 self.pop_menu()
 
+        if current_menu == "player_count_select":
+            for i in range(1, 5):
+                if element == self.all_buttons["player_count_select"][str(i)]:
+                    self.level_select_data["players"] = i
+                    self.push_menu("world_select")
+                    break
+
+        elif current_menu == "world_select":
+            for i in range(1, 4):
+                if element == self.all_buttons["world_select"][str(i)]:
+                    self.level_select_data["world"] = i
+                    self.push_menu("level_select")
+                    break
+
         elif current_menu == "level_select":
-            if element == self.all_buttons["level_select"]["1"]:
-                self.next_transition = StateTransition("push", "play", {"level": 1})
-            elif element == self.all_buttons["level_select"]["2"]:
-                self.next_transition = StateTransition("push", "play", {"level": 2})
-            elif element == self.all_buttons["level_select"]["3"]:
-                self.next_transition = StateTransition("push", "play", {"level": 3})
+            for i in range(1, 4):
+                if element == self.all_buttons["level_select"][str(i)]:
+                    self.level_select_data["level"] = i
+                    self.next_transitions = [StateTransition("push", "play", {"level_select_data": self.level_select_data})]
+                    self.menu_stack.clear()
+                    break
+        print(self.menu_stack)
 
     def update(self, time_delta):
         self.ui_manager.update(time_delta)

@@ -50,47 +50,55 @@ class GameApp:
 
     def _handle_state_transitions(self):
         current_state = self.state_stack[-1]
-        transition = getattr(current_state, "next_transition", None)
+        transitions = getattr(current_state, "next_transitions", None)
 
-        if not transition:
+        if not transitions:
             return
 
-        if transition.type == "quit":
-            self.running = False
+        for transition in transitions:
+            if not transition:
+                continue
 
-        elif transition.type == "switch":
-            self.state_stack[-1] = self.state_instances[transition.target]
+            if transition.type == "quit":
+                self.running = False
 
-        elif transition.type == "push":
-            state = self.state_instances[transition.target]
-            if "submenu" in transition.data and hasattr(state, "switch_menu"):
-                state.switch_menu(transition.data["submenu"])
-            self.state_stack.append(state)  # Add the new state to front of stack
+            elif transition.type == "switch":
+                self.state_stack[-1] = self.state_instances[transition.target]
 
-        elif transition.type == "pop_all_push":
-            self.state_stack.clear()
-            state = self.state_instances[transition.target]
-            if "submenu" in transition.data and hasattr(state, "switch_menu"):
-                state.switch_menu(transition.data["submenu"])
-            self.state_stack.append(state)  # Add the new state to front of stack
+            elif transition.type == "push":
+                state = self.state_instances[transition.target]
 
-        elif transition.type == "setting_change":
-            if "fullscreen" in transition.data:
-                self.screen = pygame.display.set_mode(self.game_context["game_size"], pygame.FULLSCREEN)
-            if "windowed" in transition.data:
-                self.screen = pygame.display.set_mode(self.game_context["game_size"], pygame.SCALED | pygame.RESIZABLE)
+                # Custom actions depending on transition.data
+                if "submenu" in transition.data and hasattr(state, "switch_menu"):
+                    state.switch_menu(transition.data["submenu"])
+                if "level_select_data" in transition.data and hasattr(state, "load_level"):
+                    data = transition.data.get("level_select_data")
+                    state.load_level(data["players"], data["world"], data["level"])
 
-        elif transition.type == "pop":
-            self.state_stack.pop()
+                self.state_stack.append(state)  # Add the new state to front of stack
 
-        # Call a method on the current state. Can be used in menus to run a method when a button is pressed. Used for Save and Load buttons
-        elif transition.type == "call":
-            method = getattr(self.state_stack[0], transition.target)
-            if callable(method):
-                method(**transition.data)
+            elif transition.type == "setting_change":
+                if "fullscreen" in transition.data:
+                    self.screen = pygame.display.set_mode(self.game_context["game_size"], pygame.FULLSCREEN)
+                if "windowed" in transition.data:
+                    self.screen = pygame.display.set_mode(self.game_context["game_size"], pygame.SCALED | pygame.RESIZABLE)
+
+            elif transition.type == "pop":
+                # Pops the top-most state
+                self.state_stack.pop()
+
+            elif transition.type == "clear":
+                # Removes all states
+                self.state_stack.clear()
+
+            # Call a method on the 2nd-top-most state. Can be used in menus to run a method when a button is pressed. Used for Save and Load buttons
+            elif transition.type == "call":
+                method = getattr(self.state_stack[-2], transition.target)
+                if callable(method):
+                    method(**transition.data)
 
         # Always reset transition
-        self.state_stack[-1].next_transition = None
+        self.state_stack[-1].next_transitions = None
 
     def _update(self):
         time_delta = self.clock.tick(60) / 1000.0
