@@ -1,6 +1,6 @@
 import pygame
 import pygame_gui
-from game_states.states import BaseState, StateTransition
+from game_states.state_helpers import BaseState, StateTransition
 
 
 class MenuState(BaseState):
@@ -138,11 +138,12 @@ class MenuState(BaseState):
                 self.next_transitions = [StateTransition("clear"), StateTransition("push", "menu", {"submenu": "main"})]
             elif element == self.all_buttons[current_menu]["quit"]:
                 self.next_transitions = [StateTransition("quit")]
+            if element == self.all_buttons[current_menu]["save"]:
+                self.next_transitions = [StateTransition("call", "save_level")]
 
             # Game-specific pause menu button logic
             if current_menu == "game_pause":
-                if element == self.all_buttons[current_menu]["save"]:
-                    self.next_transitions = [StateTransition("call", "save_level")]
+                pass
 
             # Editor-specific pause menu button logic
             if current_menu == "editor_pause":

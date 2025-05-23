@@ -2,17 +2,8 @@ import math
 import json
 import pygame
 from camera_class import Camera
-from game_states.states import BaseState, StateTransition
-
-
-class Block(pygame.sprite.Sprite):
-    def __init__(self, rect):
-        super().__init__()
-        self.color = "blue"
-        self.rect = rect
-
-        self.image = pygame.Surface(rect.size)
-        self.image.fill(self.color)
+from game_states.state_helpers import BaseState, StateTransition, load_level
+from game_classes.block_class import Block
 
 
 class EditorState(BaseState):
@@ -31,8 +22,10 @@ class EditorState(BaseState):
         self.render_surface = pygame.Surface((world_width, world_height))
         self.mouse_down_pos = None
 
-        self.blocks = pygame.sprite.Group()
-        self.players = pygame.sprite.Group()
+        self.game_sprites = {
+            "blocks": pygame.sprite.Group(),
+            "players": pygame.sprite.Group()
+        }
 
     def _handle_block_editing(self, event):
         if event.type == pygame.KEYDOWN:
@@ -43,9 +36,9 @@ class EditorState(BaseState):
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 3:  # Right mouse button pressed
-                block_under_mouse = [block for block in self.blocks if block.rect.collidepoint(self.camera.screen_pos_to_game(event.pos))]
+                block_under_mouse = [block for block in self.game_sprites["blocks"] if block.rect.collidepoint(self.camera.screen_pos_to_game(event.pos))]
                 if block_under_mouse:
-                    self.blocks.remove(block_under_mouse[0])
+                    self.game_sprites["blocks"].remove(block_under_mouse[0])
 
             if event.button == 1:  # Left mouse button pressed
                 # Convert screen position to game coordinates
@@ -58,7 +51,7 @@ class EditorState(BaseState):
                 )
 
                 # Create a new 10x10 block at the snapped mouse-down position
-                Block(pygame.Rect(self.mouse_down_pos, (10, 10))).add(self.blocks)
+                Block(pygame.Rect(self.mouse_down_pos, (10, 10))).add(self.game_sprites["blocks"])
 
         if event.type == pygame.MOUSEMOTION:
             if event.buttons[0]:  # The left mouse button is held down
@@ -86,7 +79,7 @@ class EditorState(BaseState):
                 new_rect.normalize()  # Adjusts rect to ensure positive width and height
 
                 # Update the size of the most recently created block
-                self.blocks.sprites()[-1].rect = new_rect
+                self.game_sprites["blocks"].sprites()[-1].rect = new_rect
 
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:  # The left mouse button released
@@ -94,8 +87,16 @@ class EditorState(BaseState):
                 self.mouse_down_pos = None
 
     def save_level(self):
+
+        # read from saved_count.txt
+        with open("levels/saved_count.txt", "r") as f:
+            level_count = int(f.read())
+        # Add one to the saved_count.txt
+        with open("levels/saved_count.txt", "w") as f:
+            f.write(str(int(level_count + 1)))
+
         # Save block data as JSON
-        with open("levels/level.json", "w") as f:
+        with open(f"levels/saved/saved_level_{level_count}.json", "w") as f:
             data = {
                 "blocks": [
                     {
@@ -105,7 +106,7 @@ class EditorState(BaseState):
                         "height": block.rect.height,
                         "color": block.color
                     }
-                    for block in self.blocks
+                    for block in self.game_sprites["blocks"]
                 ],
                 "players": [
                     {
@@ -114,7 +115,7 @@ class EditorState(BaseState):
                         "y": player.y,
                         "health": player.health
                     }
-                    for player in self.players
+                    for player in self.game_sprites["players"]
                 ],
             }
             json.dump(data, f, indent=4)
@@ -122,18 +123,7 @@ class EditorState(BaseState):
         print("Level saved to level.json")
 
     def load_level(self, player_count, world, level):
-        # Load block data from JSON
-        with open("levels/level.json", "r") as f:
-            data = json.load(f)
-            self.blocks.empty()
-            for block_data in data["blocks"]:
-                block = Block(pygame.Rect(block_data["x"], block_data["y"], block_data["width"], block_data["height"]))
-                block.color = block_data["color"]
-                block.add(self.blocks)
-            for player_data in data["players"]:
-                pass
-
-        print("Level loaded from level.json")
+        load_level(self, player_count, world, level)
 
     def handle_events(self, events):
         for event in events:
@@ -147,16 +137,13 @@ class EditorState(BaseState):
                 if event.key == pygame.K_ESCAPE:
                     self.next_transitions = [StateTransition("push", "menu", {"submenu": "editor_pause"})]
 
-                if event.key == pygame.K_l:
-                    self.load_level()
-
     def update(self, delta_time):
         self.camera.handle_frame_input()
 
     def render(self, screen):
 
         self.render_surface.fill("light pink")
-        for block in self.blocks:
+        for block in self.game_sprites["blocks"]:
             pygame.draw.rect(self.render_surface, block.color, block.rect)
 
         self.camera.render(screen, self.render_surface)
