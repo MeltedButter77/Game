@@ -36,17 +36,17 @@ class Player(pygame.sprite.Sprite):
         # Loop checking collisions with blocks with updated future_rect. This prevents the order of blocks being checked from affecting the result
         block_rects = [block.rect for block in blocks]
         while self.future_rect.collidelist(block_rects) >= 0:
+            dx = self.future_rect.centerx - self.rect.centerx
+            dy = self.future_rect.centery - self.rect.centery
+
+            # Use independent rects for each axis
+            future_rect_x = self.future_rect.copy()
+            future_rect_x.y = self.rect.y  # Rect with only x offset
+            future_rect_y = self.future_rect.copy()
+            future_rect_y.x = self.rect.x  # Rect with only y offset
+
             for block in blocks:
                 if self.future_rect.colliderect(block.rect):
-                    dx = self.future_rect.centerx - self.rect.centerx
-                    dy = self.future_rect.centery - self.rect.centery
-
-                    # Use independent rects for each axis
-                    future_rect_x = self.future_rect.copy()
-                    future_rect_x.y = self.rect.y  # Rect with only x offset
-                    future_rect_y = self.future_rect.copy()
-                    future_rect_y.x = self.rect.x  # Rect with only y offset
-
                     # Moves future_rect_x toward rect by 1 until it is no longer colliding
                     for i in range(abs(dx)):
                         # Check collision first because this axis may not be colliding at all
