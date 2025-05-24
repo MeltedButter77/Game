@@ -36,10 +36,17 @@
             "color": "blue"
         },
         {
-            "x": 920,
+            "x": 1010,
             "y": 430,
-            "width": 160,
+            "width": 180,
             "height": 10,
+            "color": "blue"
+        },
+        {
+            "x": 1230,
+            "y": 130,
+            "width": 10,
+            "height": 260,
             "color": "blue"
         }
     ],

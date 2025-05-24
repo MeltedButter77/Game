@@ -15,7 +15,7 @@ class Player(pygame.sprite.Sprite):
 
         self.gravity = 1
 
-    def calc_next_pos(self, blocks, render_surface):
+    def calc_next_pos(self, blocks):
         self.velocity.y += self.gravity
 
         keys = pygame.key.get_pressed()
@@ -33,35 +33,44 @@ class Player(pygame.sprite.Sprite):
         # Move future_rect to location
         self.future_rect.topleft = self.location
 
-        for block in blocks:
-            if self.future_rect.colliderect(block.rect):
-                dx = self.future_rect.centerx - self.rect.centerx
-                dy = self.future_rect.centery - self.rect.centery
+        # Loop checking collisions with blocks with updated future_rect. This prevents the order of blocks being checked from affecting the result
+        block_rects = [block.rect for block in blocks]
+        while self.future_rect.collidelist(block_rects) >= 0:
+            for block in blocks:
+                if self.future_rect.colliderect(block.rect):
+                    dx = self.future_rect.centerx - self.rect.centerx
+                    dy = self.future_rect.centery - self.rect.centery
 
-                # Calculate overlaps
-                overlap_left = abs(self.rect.right - block.rect.left)
-                overlap_right = abs(self.rect.left - block.rect.right)
-                overlap_top = abs(self.rect.bottom - block.rect.top)
-                overlap_bottom = abs(self.rect.top - block.rect.bottom)
+                    # Use independent rects for each axis
+                    future_rect_x = self.future_rect.copy()
+                    future_rect_x.y = self.rect.y  # Rect with only x offset
+                    future_rect_y = self.future_rect.copy()
+                    future_rect_y.x = self.rect.x  # Rect with only y offset
 
-                horizontal_overlap = min(overlap_left, overlap_right)
-                vertical_overlap = min(overlap_top, overlap_bottom)
-                print(horizontal_overlap, vertical_overlap)
+                    # Moves future_rect_x toward rect by 1 until it is no longer colliding
+                    for i in range(abs(dx)):
+                        # Check collision first because this axis may not be colliding at all
+                        if future_rect_x.colliderect(block.rect):
+                            self.velocity.x = 0  # Reset velocity
+                            # move future rect toward rect by 1
+                            dx = future_rect_x.centerx - self.rect.centerx
+                            if dx != 0:
+                                future_rect_x.x -= dx // abs(dx)
 
-                if horizontal_overlap < vertical_overlap:
-                    # Resolve horizontal
-                    if dx > 0:
-                        self.future_rect.right = block.rect.left
-                    elif dx < 0:
-                        self.future_rect.left = block.rect.right
-                    self.velocity.x = 0
-                else:
-                    # Resolve vertical
-                    if dy > 0:
-                        self.future_rect.bottom = block.rect.top
-                    elif dy < 0:
-                        self.future_rect.top = block.rect.bottom
-                    self.velocity.y = 0
+                    # Repeat for y
+                    for i in range(abs(dy)):
+                        if future_rect_y.colliderect(block.rect):
+                            self.velocity.y = 0
+                            dy = future_rect_y.centery - self.rect.centery
+                            if dy != 0:
+                                future_rect_y.y -= dy // abs(dy)
+
+                    # Update player's future_rect
+                    self.future_rect.topleft = (future_rect_x.x, future_rect_y.y)
+
+                    # Restart checking collisions with blocks once future_rect has been updated
+                    # because all calcs for previous blocks are now outdated.
+                    break
 
         # After adjustments, update location
         self.location = pygame.Vector2(self.future_rect.topleft)

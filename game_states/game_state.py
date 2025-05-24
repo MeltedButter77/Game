@@ -32,7 +32,7 @@ class GameState(BaseState):
 
     def update(self, delta_time):
         for player in self.game_sprites["players"].sprites():
-            player.calc_next_pos(self.game_sprites["blocks"].sprites(), render_surface=self.render_surface)
+            player.calc_next_pos(self.game_sprites["blocks"].sprites())
 
         for player in self.game_sprites["players"].sprites():
             player.apply_next_pos()
