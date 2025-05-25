@@ -123,6 +123,5 @@ class GameApp:
         pygame.display.flip()
 
 
-if __name__ == "__main__":
-    app = GameApp()
-    asyncio.run(app.run())
+app = GameApp()
+asyncio.run(app.run())
