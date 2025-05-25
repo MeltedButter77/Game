@@ -67,25 +67,3 @@ class Camera:
             self.x -= self.speed
         if keys[self.controls["right"]]:
             self.x += self.speed
-
-    def render(self, screen, world_surface):
-        """Render the scaled game surface to the window"""
-        world_rect = world_surface.get_rect()
-
-        camera_view = pygame.Rect(self.x, self.y, screen.get_width() / self.zoom, screen.get_height() / self.zoom)
-        camera_view_clamped = camera_view.clip(world_rect)
-
-        subsurface = world_surface.subsurface(camera_view_clamped)
-
-        # Blit subsurface into the correct position on final_surface
-        blit_pos = (
-            camera_view_clamped.x - camera_view.x,
-            camera_view_clamped.y - camera_view.y
-        )
-
-        final_surface = pygame.Surface((camera_view.width, camera_view.height))
-        final_surface.fill((30, 30, 30))  # Your background color
-        final_surface.blit(subsurface, blit_pos)
-
-        scaled_surface = pygame.transform.scale(final_surface, (screen.get_width(), screen.get_height()))
-        screen.blit(scaled_surface, (0, 0))

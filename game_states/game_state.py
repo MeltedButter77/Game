@@ -7,8 +7,6 @@ class GameState(BaseState):
     def __init__(self, context):
         super().__init__(context)
         self.camera = Camera()
-        world_width, world_height = 10000, 10000
-        self.render_surface = pygame.Surface((world_width, world_height))
 
         self.game_sprites = {
             "blocks": pygame.sprite.Group(),
@@ -40,11 +38,7 @@ class GameState(BaseState):
         self.camera.y = self.game_sprites["players"].sprites()[0].rect.centery - self.context["game_size"][1] / 2
 
     def render(self, screen):
-        self.render_surface.fill("light blue")
+        screen.fill("light blue")
         for object_group in self.game_sprites.values():
             for sprite in object_group.sprites():
-                self.render_surface.blit(sprite.image, sprite.rect)
-
-        self.camera.render(screen, self.render_surface)
-
-
+                screen.blit(sprite.image, sprite.rect.copy().move(-self.camera.x, -self.camera.y))

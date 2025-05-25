@@ -18,8 +18,6 @@ class EditorState(BaseState):
             }
         )
 
-        world_width, world_height = 10000, 10000
-        self.render_surface = pygame.Surface((world_width, world_height))
         self.mouse_down_pos = None
         self.level_info = None
 
@@ -149,10 +147,7 @@ class EditorState(BaseState):
         self.camera.handle_frame_input()
 
     def render(self, screen):
-
-        self.render_surface.fill("light pink")
+        screen.fill("light pink")
         for object_group in self.game_sprites.values():
             for sprite in object_group.sprites():
-                self.render_surface.blit(sprite.image, sprite.rect)
-
-        self.camera.render(screen, self.render_surface)
+                screen.blit(sprite.image, sprite.rect.copy().move(-self.camera.x, -self.camera.y))
