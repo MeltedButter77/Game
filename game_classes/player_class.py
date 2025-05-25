@@ -35,7 +35,7 @@ class Player(pygame.sprite.Sprite):
 
         # Loop checking collisions with blocks with updated future_rect. This prevents the order of blocks being checked from affecting the result
         block_rects = [block.rect for block in blocks]
-        while self.future_rect.collidelist(block_rects) >= 0:
+        while self.future_rect.collidelist(block_rects) >= 0 and self.future_rect.topleft != self.rect.topleft:
             dx = self.future_rect.centerx - self.rect.centerx
             dy = self.future_rect.centery - self.rect.centery
 
@@ -45,9 +45,28 @@ class Player(pygame.sprite.Sprite):
             future_rect_y = self.future_rect.copy()
             future_rect_y.x = self.rect.x  # Rect with only y offset
 
+            # Start looping over blocks
             for block in blocks:
+                # Check if the future_rect collides with the current block
                 if self.future_rect.colliderect(block.rect):
-                    # Moves future_rect_x toward rect by 1 until it is no longer colliding
+                    # If neither axis is colliding, we cannot handle them separately.
+                    # This approach steps back the future_rect perfectly diagonally (until one axis aligns with rect x or y, then future rect moves along one axis).
+                    # The above line may be cut short if any step of future_rect is not colliding.
+                    if not future_rect_x.colliderect(block.rect) and not future_rect_y.colliderect(block.rect):
+                        for i in range(max(abs(dx), abs(dy))):
+                            # Check collision to see if we can stop stepping back here
+                            if self.future_rect.colliderect(block.rect):
+                                self.velocity = pygame.Vector2(0, 0)  # Reset velocity
+                                # move future rect toward rect by 1
+                                dx, dy = self.future_rect.centerx - self.rect.centerx, self.future_rect.centery - self.rect.centery
+                                if dx != 0:
+                                    self.future_rect.x -= dx // abs(dx)
+                                if dy != 0:
+                                    self.future_rect.y -= dy // abs(dy)
+                        continue
+
+                    # If one axis is colliding, we can handle it separately.
+                    # This approach steps back the future_rect perfectly along one axis until it meets rect or is not colliding anymore.
                     for i in range(abs(dx)):
                         # Check collision first because this axis may not be colliding at all
                         if future_rect_x.colliderect(block.rect):
@@ -56,7 +75,6 @@ class Player(pygame.sprite.Sprite):
                             dx = future_rect_x.centerx - self.rect.centerx
                             if dx != 0:
                                 future_rect_x.x -= dx // abs(dx)
-
                     # Repeat for y
                     for i in range(abs(dy)):
                         if future_rect_y.colliderect(block.rect):
@@ -67,6 +85,7 @@ class Player(pygame.sprite.Sprite):
 
                     # Update player's future_rect
                     self.future_rect.topleft = (future_rect_x.x, future_rect_y.y)
+                    print(self.future_rect.topleft)
 
                     # Restart checking collisions with blocks once future_rect has been updated
                     # because all calcs for previous blocks are now outdated.
