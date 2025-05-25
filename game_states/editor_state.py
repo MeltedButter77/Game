@@ -89,8 +89,14 @@ class EditorState(BaseState):
     def save_level(self):
 
         # read from saved_count.txt
-        with open("levels/saved_count.txt", "r") as f:
-            level_count = int(f.read())
+        try:
+            with open("levels/saved_count.txt", "r") as f:
+                level_count = int(f.read())
+        except FileNotFoundError:
+            level_count = 0
+            # create saved_count.txt
+            with open("levels/saved_count.txt", "w") as f:
+                f.write(str(int(level_count + 1)))
         # Add one to the saved_count.txt
         with open("levels/saved_count.txt", "w") as f:
             f.write(str(int(level_count + 1)))

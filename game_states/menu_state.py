@@ -118,6 +118,8 @@ class MenuState(BaseState):
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 if len(self.menu_stack) > 1:
                     self.pop_menu()
+                else:
+                    self.next_transitions = [StateTransition("pop")]
             elif event.type == pygame_gui.UI_BUTTON_PRESSED:
                 self._handle_button_event(event.ui_element)
 

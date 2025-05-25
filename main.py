@@ -92,7 +92,8 @@ class GameApp:
 
             elif transition.type == "pop":
                 # Pops the top-most state
-                self.state_stack.pop()
+                if len(self.state_stack) > 1:
+                    self.state_stack.pop()
 
             elif transition.type == "clear":
                 # Removes all states
