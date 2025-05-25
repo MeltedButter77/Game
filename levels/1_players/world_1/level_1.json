@@ -48,6 +48,27 @@
             "width": 10,
             "height": 260,
             "color": "blue"
+        },
+        {
+            "x": -320,
+            "y": -360,
+            "width": 320,
+            "height": 980,
+            "color": "blue"
+        },
+        {
+            "x": 1470,
+            "y": -530,
+            "width": 210,
+            "height": 1010,
+            "color": "blue"
+        },
+        {
+            "x": -320,
+            "y": -530,
+            "width": 1790,
+            "height": 170,
+            "color": "blue"
         }
     ],
     "players": [

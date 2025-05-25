@@ -4,27 +4,116 @@ import pygame
 class Player(pygame.sprite.Sprite):
     def __init__(self, rect):
         super().__init__()
+
+        # === Core Sprite Attributes ===
         self.rect = rect
-        self.future_rect = rect.copy()
-
         self.image = pygame.Surface(rect.size)
+        self.future_rect = rect.copy()  # Used for collision prediction or pathing
 
-        self.speed = 10
-        self.location = pygame.Vector2(rect.x, rect.y)
-        self.velocity = pygame.Vector2(0, 0)
+        # === Static Player Settings ===
+        self.speed = 10  # Movement speed
+        self.gravity = pygame.Vector2(0, 1)  # Default gravity direction (down)
+        self.flying = False  # If True, disables gravity (free movement)
 
-        self.gravity = 1
+        # Key mappings chosen by player (customizable)
+        self.selected_controls = {
+            "up": pygame.K_w,
+            "down": pygame.K_s,
+            "left": pygame.K_a,
+            "right": pygame.K_d
+        }
+
+        # === Dynamic State ===
+        self.location = pygame.Vector2(rect.x, rect.y)  # Sub-pixel location tracking
+        self.velocity = pygame.Vector2(0, 0)  # Current movement vector
+        self.on_ground = False  # For gravity/jumping logic
+
+        # === Derived Setup (Depends on Previous Attributes) ===
+
+        # Validate gravity direction
+        if abs(self.gravity.y) > 0 and abs(self.gravity.x) > 0:
+            print("Error: Gravity must be horizontal, vertical or zero, not diagonal.")
+            exit(1)
+        # Normalize gravity; consistent across all players
+        if self.gravity.length() > 1:
+            self.gravity.normalize()
+
+        # Disable gravity if flying
+        if self.flying:
+            self.gravity = pygame.Vector2(0, 0)
+
+        # === Control Mapping Based on Gravity ===
+        if self.flying:
+            # Free movement – direct mapping
+            self.controls = {
+                "up": self.selected_controls["up"],
+                "down": self.selected_controls["down"],
+                "left": self.selected_controls["left"],
+                "right": self.selected_controls["right"]
+            }
+        elif self.gravity.y < 0:
+            # Gravity pulls upward – jump is down key
+            self.controls = {
+                "jump": self.selected_controls["down"],
+                "down": self.selected_controls["up"],
+                "left": self.selected_controls["left"],
+                "right": self.selected_controls["right"]
+            }
+        elif self.gravity.y > 0:
+            # Gravity pulls downward – jump is up key
+            self.controls = {
+                "jump": self.selected_controls["up"],
+                "down": self.selected_controls["down"],
+                "left": self.selected_controls["left"],
+                "right": self.selected_controls["right"]
+            }
+        elif self.gravity.x < 0:
+            # Gravity pulls left – jump is right key
+            self.controls = {
+                "jump": self.selected_controls["right"],
+                "down": self.selected_controls["left"],
+                "left": self.selected_controls["up"],
+                "right": self.selected_controls["down"]
+            }
+        elif self.gravity.x > 0:
+            # Gravity pulls right – jump is left key
+            self.controls = {
+                "jump": self.selected_controls["left"],
+                "down": self.selected_controls["right"],
+                "left": self.selected_controls["up"],
+                "right": self.selected_controls["down"]
+            }
 
     def calc_next_pos(self, sprites):
-        self.velocity.y += self.gravity
+        self.velocity += self.gravity
 
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_w]:
-            self.velocity.y = -self.speed
-        if keys[pygame.K_d]:
-            self.location.x += self.speed
-        if keys[pygame.K_a]:
-            self.location.x += -self.speed
+        if self.gravity:
+            if keys[self.controls["jump"]] and self.on_ground:
+                if abs(self.gravity.y) > 0:
+                    self.velocity.y = -self.speed * self.gravity.y
+                else:
+                    self.velocity.x = -self.speed * self.gravity.x
+            if keys[self.controls["right"]]:
+                if abs(self.gravity.y) > 0:
+                    self.location.x += self.speed
+                else:
+                    self.location.y += self.speed
+            if keys[self.controls["left"]]:
+                if abs(self.gravity.y) > 0:
+                    self.location.x += -self.speed
+                else:
+                    self.location.y += -self.speed
+
+        elif self.flying:
+            if keys[self.controls["up"]]:
+                self.location.y += -self.speed
+            if keys[self.controls["down"]]:
+                self.location.y += self.speed
+            if keys[self.controls["right"]]:
+                self.location.x += self.speed
+            if keys[self.controls["left"]]:
+                self.location.x += -self.speed
 
         # Update location
         self.location.x += self.velocity.x
@@ -92,6 +181,18 @@ class Player(pygame.sprite.Sprite):
 
         # After adjustments, update location
         self.location = pygame.Vector2(self.future_rect.topleft)
+
+        # === Update on_ground status based on gravity ===
+        self.on_ground = False  # Reset to default
+        if not self.flying:
+            check_offset = pygame.Vector2(self.gravity).normalize()
+            check_rect = self.rect.move(round(check_offset.x), round(check_offset.y))
+
+            for sprite in sprites:
+                if check_rect.colliderect(sprite.rect):
+                    self.on_ground = True
+                    break
+        print(self.on_ground)
 
     def apply_next_pos(self):
         self.rect = self.future_rect.copy()
