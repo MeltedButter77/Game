@@ -97,8 +97,10 @@ class GameState(BaseState):
             player.apply_next_pos()
             if player.input_handler:
                 player.apply_input()
-        self.camera.x = self.game_sprites["players"].sprites()[0].rect.centerx - self.context["game_size"][0] / 2
-        self.camera.y = self.game_sprites["players"].sprites()[0].rect.centery - self.context["game_size"][1] / 2
+
+        if len(self.game_sprites["players"].sprites()) > 0:
+            self.camera.x = self.game_sprites["players"].sprites()[0].rect.centerx - self.context["game_size"][0] / 2
+            self.camera.y = self.game_sprites["players"].sprites()[0].rect.centery - self.context["game_size"][1] / 2
 
     def render(self, screen):
         screen.fill("light blue")
