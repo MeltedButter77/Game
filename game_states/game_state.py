@@ -7,19 +7,31 @@ from game_classes.camera_class import Camera
 class InputHandler:
     def __init__(self, controller):
         self.player = None
-
         self.controller = controller  # pygame._sdl2.controller.Controller(0)
 
-        self.key_binds = {
-            "up": pygame.K_w,
-            "down": pygame.K_s,
-            "left": pygame.K_a,
-            "right": pygame.K_d
-        }
+        self.axis_threshold = 2
+
+        if controller == "keyboard":
+            self.key_binds = {
+                "up": pygame.K_w,
+                "down": pygame.K_s,
+                "left": pygame.K_a,
+                "right": pygame.K_d,
+                "jump": pygame.K_SPACE,
+            }
+        else:
+            self.key_binds = {
+                "left_y_axis": 1,  # Y-axis negative movement
+                "left_x_axis": 0,  # X-axis positive movement
+                "right_y_axis": 3,  #
+                "right_x_axis": 2,  #
+                "jump": 0,
+            }
 
     def get_input(self):
 
         controls = {
+            "jump": False,
             "up": False,
             "down": False,
             "left": False,
@@ -28,6 +40,7 @@ class InputHandler:
 
         if self.controller == "keyboard":
             keys = pygame.key.get_pressed()  # Get active keyboard state
+            controls["jump"] = keys[self.key_binds["jump"]]
             controls["up"] = keys[self.key_binds["up"]]
             controls["down"] = keys[self.key_binds["down"]]
             controls["left"] = keys[self.key_binds["left"]]
@@ -35,7 +48,16 @@ class InputHandler:
             return controls
 
         elif self.controller:
-            print(self.controller.get_axis(0), self.controller.get_axis(1), self.controller.get_axis(2), self.controller.get_axis(3))
+            if self.controller.get_button(self.key_binds["jump"]):
+                controls["jump"] = True
+            if self.controller.get_axis(self.key_binds["left_y_axis"]) < -self.axis_threshold:
+                controls["up"] = True
+            if self.controller.get_axis(self.key_binds["left_y_axis"]) > self.axis_threshold:
+                controls["down"] = True
+            if self.controller.get_axis(self.key_binds["left_x_axis"]) < -self.axis_threshold:
+                controls["left"] = True
+            if self.controller.get_axis(self.key_binds["left_x_axis"]) > self.axis_threshold:
+                controls["right"] = True
 
         return controls
 
@@ -108,6 +130,16 @@ class GameState(BaseState):
                 if event.key == pygame.K_ESCAPE:
                     self.next_transitions = [StateTransition("push", "menu", {"submenu": "game_pause"})]
 
+            # On input, assign the input handler to the player and player to input handler
+            for input_handler in self.input_handlers:
+                user_input = input_handler.get_input()
+                for value in user_input.values():
+                    if value:
+                        for player in self.game_sprites["players"]:
+                            if not player.input_handler:
+                                input_handler.player = self.game_sprites["players"].sprites()[0]
+                                input_handler.player.input_handler = input_handler
+
     def load_level(self, player_count, world, level):
         load_level(self, player_count, world, level)
 
@@ -120,6 +152,8 @@ class GameState(BaseState):
 
         for player in self.game_sprites["players"].sprites():
             player.apply_next_pos()
+            if player.input_handler:
+                player.apply_input()
         self.camera.x = self.game_sprites["players"].sprites()[0].rect.centerx - self.context["game_size"][0] / 2
         self.camera.y = self.game_sprites["players"].sprites()[0].rect.centery - self.context["game_size"][1] / 2
 
