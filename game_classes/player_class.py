@@ -89,8 +89,6 @@ class Player(pygame.sprite.Sprite):
     def calc_next_pos(self, sprites):
         self.velocity += self.gravity
 
-        print(self.input_handler.controller.get_axis(0), self.input_handler.controller.get_axis(1))
-
         keys = pygame.key.get_pressed()
         if self.gravity:
             if keys[self.controls["jump"]] and self.on_ground:
