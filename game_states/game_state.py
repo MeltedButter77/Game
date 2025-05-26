@@ -10,12 +10,34 @@ class InputHandler:
 
         self.controller = controller  # pygame._sdl2.controller.Controller(0)
 
-        self.controls = {
+        self.key_binds = {
             "up": pygame.K_w,
             "down": pygame.K_s,
             "left": pygame.K_a,
             "right": pygame.K_d
         }
+
+    def get_input(self):
+
+        controls = {
+            "up": False,
+            "down": False,
+            "left": False,
+            "right": False,
+        }
+
+        if self.controller == "keyboard":
+            keys = pygame.key.get_pressed()  # Get active keyboard state
+            controls["up"] = keys[self.key_binds["up"]]
+            controls["down"] = keys[self.key_binds["down"]]
+            controls["left"] = keys[self.key_binds["left"]]
+            controls["right"] = keys[self.key_binds["right"]]
+            return controls
+
+        elif self.controller:
+            print(self.controller.get_axis(0), self.controller.get_axis(1), self.controller.get_axis(2), self.controller.get_axis(3))
+
+        return controls
 
 
 class GameState(BaseState):
@@ -39,7 +61,7 @@ class GameState(BaseState):
         if self.controllers is None:
             self.controllers = []
         if self.input_handlers is None:
-            self.input_handlers = []
+            self.input_handlers = [InputHandler("keyboard")]
 
         # Populate controllers list
         for i in range(pygame._sdl2.controller.get_count() - 1):
@@ -62,10 +84,17 @@ class GameState(BaseState):
             if not has_handler:
                 self.input_handlers.append(InputHandler(controller))
 
+        # Remove deactivated controller's input_handlers
         for input_handler in self.input_handlers:
-            if not input_handler.controller.attached():
-                self.input_handlers.remove(input_handler)
-                input_handler.controller.quit()
+            if not input_handler.controller == "keyboard":
+                try:
+                    if not input_handler.controller.attached():
+                        self.input_handlers.remove(input_handler)
+                        input_handler.controller.quit()
+                except Exception as e:
+                    print(e)
+                    self.input_handlers.remove(input_handler)
+                    input_handler.controller.quit()
 
     def handle_events(self, events):
         for event in events:
