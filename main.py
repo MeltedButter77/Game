@@ -9,6 +9,7 @@
 import asyncio
 import sys
 import pygame
+import pygame._sdl2.controller
 import pygame_gui
 from game_states.editor_state import EditorState
 from game_states.menu_state import MenuState
@@ -27,6 +28,7 @@ class StateTransition:
 class GameApp:
     def __init__(self):
         pygame.init()
+        pygame._sdl2.controller.init()
         self.clock = pygame.time.Clock()
         if sys.platform in ('emscripten','wasi'):
             self.screen = pygame.display.set_mode((WIDTH, HEIGHT))

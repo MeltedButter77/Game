@@ -15,6 +15,8 @@ class Player(pygame.sprite.Sprite):
         self.gravity = pygame.Vector2(0, 1)  # Default gravity direction (down)
         self.flying = False  # If True, disables gravity (free movement)
 
+        self.input_handler = None
+
         # Key mappings chosen by player (customizable)
         self.selected_controls = {
             "up": pygame.K_w,
@@ -86,6 +88,8 @@ class Player(pygame.sprite.Sprite):
 
     def calc_next_pos(self, sprites):
         self.velocity += self.gravity
+
+        print(self.input_handler.controller.get_axis(0), self.input_handler.controller.get_axis(1))
 
         keys = pygame.key.get_pressed()
         if self.gravity:
@@ -192,7 +196,6 @@ class Player(pygame.sprite.Sprite):
                 if check_rect.colliderect(sprite.rect):
                     self.on_ground = True
                     break
-        print(self.on_ground)
 
     def apply_next_pos(self):
         self.rect = self.future_rect.copy()
