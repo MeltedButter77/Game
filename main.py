@@ -1,4 +1,13 @@
+# /// script
+# dependencies = [
+#  "pygame-ce",
+#  "pygame-gui",
+#  "python-i18n",
+# ]
+# ///
+
 import asyncio
+import sys
 import pygame
 import pygame_gui
 from game_states.editor_state import EditorState
@@ -10,22 +19,21 @@ WIDTH, HEIGHT = 1280, 720  # Use 320x180 or multiples
 
 class StateTransition:
     def __init__(self, type_=None, target=None, data=None):
-        self.type = type_          # "push", "pop", "switch", "quit"
-        self.target = target       # "editor", "menu"
-        self.data = data or {}     # Optional extra info
+        self.type = type_  # "push", "pop", "switch", "quit"
+        self.target = target  # "editor", "menu"
+        self.data = data or {}  # Optional extra info
 
 
 class GameApp:
     def __init__(self):
         pygame.init()
         self.clock = pygame.time.Clock()
-        self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED | pygame.RESIZABLE)
+        if sys.platform in ('emscripten','wasi'):
+            self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        else:
+            self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED | pygame.RESIZABLE)
 
-        self.game_context = {
-            "ui_manager": pygame_gui.UIManager((WIDTH, HEIGHT)),
-            "game_size": (WIDTH, HEIGHT),
-            "grid_size": 10
-        }
+        self.game_context = {"ui_manager": pygame_gui.UIManager((WIDTH, HEIGHT)), "game_size": (WIDTH, HEIGHT), "grid_size": 10}
         self.state_instances = {
             "menu": MenuState(self.game_context),
             "game": GameState(self.game_context),
