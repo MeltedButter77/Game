@@ -121,7 +121,8 @@ class MenuState(BaseState):
                 else:
                     self.next_transitions = [StateTransition("pop")]
             elif event.type == pygame_gui.UI_BUTTON_PRESSED:
-                self._handle_button_event(event.ui_element)
+                if hasattr(event, "ui_element"):
+                    self._handle_button_event(event.ui_element)
 
             self.ui_manager.process_events(event)
 
