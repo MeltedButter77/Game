@@ -2,24 +2,27 @@ import pygame
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, rect):
+    def __init__(self, position, size):
         super().__init__()
 
         # === Core Sprite Attributes ===
-        self.rect = rect
-        self.image = pygame.Surface(rect.size)
-        self.future_rect = rect.copy()  # Used for collision prediction or pathing
+        self.image = pygame.image.load("assets/player.png")  # .convert_alpha()
+        self.image = pygame.transform.scale(self.image, size)
+        self.unrotated_image = self.image.copy()
+        self.rect = self.image.get_rect()
+        self.rect.topleft = position
+        self.future_rect = self.rect.copy()  # Used for collision prediction or pathing
 
         # === Static Player Settings ===
         self.speed = 10  # Movement speed
-        self.gravity = pygame.Vector2(0, 1)  # Default gravity direction (down)
+        self.gravity = pygame.Vector2(1, 0)  # Default gravity direction (down)
         self.flying = False  # If True, disables gravity (free movement)
 
         self.input_handler = None
         self.controls = None
 
         # === Dynamic State ===
-        self.location = pygame.Vector2(rect.x, rect.y)  # Sub-pixel location tracking
+        self.location = pygame.Vector2(self.rect.x, self.rect.y)  # Sub-pixel location tracking
         self.velocity = pygame.Vector2(0, 0)  # Current movement vector
         self.on_ground = False  # For gravity/jumping logic
 
@@ -36,6 +39,18 @@ class Player(pygame.sprite.Sprite):
         # Disable gravity if flying
         if self.flying:
             self.gravity = pygame.Vector2(0, 0)
+
+        self.update_image()
+
+    def update_image(self):
+        if self.gravity.x < 0:
+            self.image = pygame.transform.rotate(self.unrotated_image, -90)
+        elif self.gravity.x > 0:
+            self.image = pygame.transform.rotate(self.unrotated_image, 90)
+        elif self.gravity.y < 0:
+            self.image = pygame.transform.flip(self.unrotated_image, False, True)
+        elif self.gravity.y > 0:
+            self.image = pygame.transform.flip(self.unrotated_image, False, False)
 
     def load_controls(self):
         # Loads self.controls based on input handler and gravity
@@ -256,3 +271,13 @@ class Player(pygame.sprite.Sprite):
 
     def apply_next_pos(self):
         self.rect = self.future_rect.copy()
+
+    def draw(self, surface, camera):
+        zoomed_rect = pygame.Rect(
+            (self.rect.x - camera.x) * camera.zoom,
+            (self.rect.y - camera.y) * camera.zoom,
+            self.rect.width * camera.zoom,
+            self.rect.height * camera.zoom
+        )
+        scaled_image = pygame.transform.scale(self.image, zoomed_rect.size)
+        surface.blit(scaled_image, zoomed_rect)

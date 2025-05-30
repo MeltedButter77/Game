@@ -4,25 +4,33 @@ import pygame
 # Requires handle_input() (every frame) and handle_zoom() (on mouse scroll event)
 
 
+
 class Camera:
-    def __init__(self, controls=dict(up=pygame.K_UP, down=pygame.K_DOWN, left=pygame.K_LEFT, right=pygame.K_RIGHT)):
+    def __init__(self, screen_size, controls=dict(up=pygame.K_UP, down=pygame.K_DOWN, left=pygame.K_LEFT, right=pygame.K_RIGHT)):
         self.x = 0
         self.y = 0
         self.speed = 10
-        self.zoom = 1.0
+        self.zoom = 1.222
         self.min_zoom = 0.3
         self.max_zoom = 10
         self.pan_start_location = None
+
+        self.screen_size = screen_size
 
         self.controls = controls
 
     def game_pos_to_screen(self, pos):
         """Convert game position to screen position"""
-        return pos[0] * self.zoom - self.x, pos[1] * self.zoom - self.y  # could be broken, added *self.zoom to screen_pos_to_game to fix it
+        return pos[0] * self.zoom - self.x, pos[1] * self.zoom - self.y
 
     def screen_pos_to_game(self, pos):
         """Convert screen position to game position"""
         return (pos[0] + self.x * self.zoom) / self.zoom, (pos[1] + self.y * self.zoom) / self.zoom
+
+    def move_center_to(self, dest_pos):
+        center_pos = self.screen_pos_to_game((self.screen_size[0] / 2, self.screen_size[1] / 2))
+        self.x -= center_pos[0] - dest_pos[0]
+        self.y -= center_pos[1] - dest_pos[1]
 
     def handle_event_input(self, event):
         if event.type == pygame.MOUSEWHEEL:

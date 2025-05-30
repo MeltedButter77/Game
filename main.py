@@ -35,7 +35,11 @@ class GameApp:
         else:
             self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED | pygame.RESIZABLE)
 
-        self.game_context = {"ui_manager": pygame_gui.UIManager((WIDTH, HEIGHT)), "game_size": (WIDTH, HEIGHT), "grid_size": 10}
+        self.game_context = {
+            "ui_manager": pygame_gui.UIManager((WIDTH, HEIGHT)),
+            "screen_size": (WIDTH, HEIGHT),
+            "grid_size": 16
+        }
         self.state_instances = {
             "menu": MenuState(self.game_context),
             "game": GameState(self.game_context),

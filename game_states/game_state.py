@@ -8,7 +8,7 @@ from game_classes.input_handler import InputHandler
 class GameState(BaseState):
     def __init__(self, context):
         super().__init__(context)
-        self.camera = Camera()
+        self.camera = Camera(self.context["screen_size"])
 
         self.game_sprites = {
             "blocks": pygame.sprite.Group(),
@@ -84,7 +84,7 @@ class GameState(BaseState):
                                 input_handler.player.input_handler = input_handler
 
     def load_level(self, player_count, world, level):
-        load_level(self, player_count, world, level)
+        load_level(self, self.context["grid_size"], player_count, world, level)
 
     def save_level(self):
         pass
@@ -99,11 +99,10 @@ class GameState(BaseState):
                 player.apply_input()
 
         if len(self.game_sprites["players"].sprites()) > 0:
-            self.camera.x = self.game_sprites["players"].sprites()[0].rect.centerx - self.context["game_size"][0] / 2
-            self.camera.y = self.game_sprites["players"].sprites()[0].rect.centery - self.context["game_size"][1] / 2
+            self.camera.move_center_to(self.game_sprites["players"].sprites()[0].rect.center)
 
     def render(self, screen):
         screen.fill("light blue")
         for object_group in self.game_sprites.values():
             for sprite in object_group.sprites():
-                screen.blit(sprite.image, sprite.rect.copy().move(-self.camera.x, -self.camera.y))
+                sprite.draw(screen, self.camera)

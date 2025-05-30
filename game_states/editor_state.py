@@ -10,6 +10,7 @@ class EditorState(BaseState):
     def __init__(self, context):
         super().__init__(context)
         self.camera = Camera(
+            self.context["screen_size"],
             {
                 "up": pygame.K_w,
                 "down": pygame.K_s,
@@ -17,6 +18,8 @@ class EditorState(BaseState):
                 "right": pygame.K_d,
             }
         )
+
+        self.grid_size = self.context["grid_size"]
 
         self.mouse_down_pos = None
         self.level_info = None
@@ -45,12 +48,12 @@ class EditorState(BaseState):
 
                 # Snap the position down to the nearest 10 (grid alignment)
                 self.mouse_down_pos = (
-                    math.floor(self.mouse_down_pos[0] / 10) * 10,
-                    math.floor(self.mouse_down_pos[1] / 10) * 10
+                    math.floor(self.mouse_down_pos[0] / self.grid_size) * self.grid_size,
+                    math.floor(self.mouse_down_pos[1] / self.grid_size) * self.grid_size
                 )
 
                 # Create a new 10x10 block at the snapped mouse-down position
-                Block(pygame.Rect(self.mouse_down_pos, (10, 10))).add(self.game_sprites["blocks"])
+                Block(self.grid_size, pygame.Rect(self.mouse_down_pos, (self.grid_size, self.grid_size))).add(self.game_sprites["blocks"])
 
         if event.type == pygame.MOUSEMOTION:
             if event.buttons[0]:  # The left mouse button is held down
@@ -59,8 +62,8 @@ class EditorState(BaseState):
 
                 # Snap the position down to the nearest 10 (grid alignment)
                 mouse_pos = (
-                    math.ceil(mouse_pos[0] / 10) * 10,
-                    math.ceil(mouse_pos[1] / 10) * 10
+                    math.ceil(mouse_pos[0] / self.grid_size) * self.grid_size,
+                    math.ceil(mouse_pos[1] / self.grid_size) * self.grid_size
                 )
 
                 # Calculate the size of the rectangle based on the drag distance
@@ -69,8 +72,8 @@ class EditorState(BaseState):
 
                 # Ensure neither width nor height is zero (minimum grid size in either direction)
                 size = (
-                    dx if dx != 0 else 10,
-                    dy if dy != 0 else 10
+                    dx if dx != 0 else self.grid_size,
+                    dy if dy != 0 else self.grid_size
                 )
 
                 # Create a new rect from mouse_down_pos to current mouse_pos
@@ -135,7 +138,7 @@ class EditorState(BaseState):
 
     def load_level(self, player_count, world, level):
         self.level_info = {"player_count": player_count, "world": world, "level": level}
-        load_level(self, player_count, world, level)
+        load_level(self, self.context["grid_size"], player_count, world, level)
 
     def handle_events(self, events):
         for event in events:
@@ -156,4 +159,4 @@ class EditorState(BaseState):
         screen.fill("light pink")
         for object_group in self.game_sprites.values():
             for sprite in object_group.sprites():
-                screen.blit(sprite.image, sprite.rect.copy().move(-self.camera.x, -self.camera.y))
+                sprite.draw(screen, self.camera)
