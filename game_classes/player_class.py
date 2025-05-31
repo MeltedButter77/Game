@@ -3,6 +3,12 @@ import pygame
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, position, size):
+        """Initialize a Player sprite with movement, gravity and input handling capabilities.
+        
+        Args:
+            position: Initial (x,y) position tuple
+            size: (width, height) tuple for sprite size
+        """
         super().__init__()
 
         # === Core Sprite Attributes ===
@@ -10,14 +16,16 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, size)
         self.unrotated_image = self.image.copy()
         self.rect = self.image.get_rect()
-        self.rect.topleft = position
+        self.rect.center = position
+        self.display_rect = self.image.get_rect()
         self.future_rect = self.rect.copy()  # Used for collision prediction or pathing
 
         # === Static Player Settings ===
         self.speed = 10  # Movement speed
-        self.gravity = pygame.Vector2(1, 0)  # Default gravity direction (down)
-        self.flying = False  # If True, disables gravity (free movement)
+        self.update_gravity_direction("down")
+        self.debug = False  # Toggle collision box visualization
 
+        # === Input Handling ===
         self.input_handler = None
         self.controls = None
 
@@ -26,23 +34,41 @@ class Player(pygame.sprite.Sprite):
         self.velocity = pygame.Vector2(0, 0)  # Current movement vector
         self.on_ground = False  # For gravity/jumping logic
 
-        # === Derived Setup (Depends on Previous Attributes) ===
+        # === Debugging ===
+        self.debug = False
+
+    def is_flying(self):
+        return self.gravity.length() == 0
+
+    def update_gravity_direction(self, direction=None):
+        """Update gravity direction and adjust collision rectangles accordingly."""
+        # Reset collision rect sizes
+        if hasattr(self, "gravity"):
+            if self.gravity.x == 0:
+                self.rect.width += 20
+                self.future_rect.width += 20
+            if self.gravity.y == 0:
+                self.rect.height += 20
+                self.future_rect.height += 20
+
+        # Set gravity vector based on direction
+        gravity_vectors = {
+            "up": (0, -1),
+            "down": (0, 1),
+            "left": (-1, 0),
+            "right": (1, 0),
+            None: (0, 0)
+        }
+        self.gravity = pygame.Vector2(*gravity_vectors.get(direction, (0, 0)))
 
         # Validate gravity direction
         if abs(self.gravity.y) > 0 and abs(self.gravity.x) > 0:
             print("Error: Gravity must be horizontal, vertical or zero, not diagonal.")
             exit(1)
-        # Normalize gravity; consistent across all players
         if self.gravity.length() > 1:
             self.gravity.normalize()
 
-        # Disable gravity if flying
-        if self.flying:
-            self.gravity = pygame.Vector2(0, 0)
-
-        self.update_image()
-
-    def update_image(self):
+        # Update image rotation
         if self.gravity.x < 0:
             self.image = pygame.transform.rotate(self.unrotated_image, -90)
         elif self.gravity.x > 0:
@@ -52,6 +78,14 @@ class Player(pygame.sprite.Sprite):
         elif self.gravity.y > 0:
             self.image = pygame.transform.flip(self.unrotated_image, False, False)
 
+        # Update collision rect
+        if self.gravity.x == 0:
+            self.rect.width -= 20
+            self.future_rect.width -= 20
+        if self.gravity.y == 0:
+            self.rect.height -= 20
+            self.future_rect.height -= 20
+
     def load_controls(self):
         # Loads self.controls based on input handler and gravity
         # Basically sets each bind (the keys) to a key value chosen by the input handler
@@ -59,7 +93,7 @@ class Player(pygame.sprite.Sprite):
             return
 
         if self.input_handler == "keyboard":
-            if self.flying:
+            if self.is_flying():
                 # Free movement – direct mapping
                 self.controls = {
                     "jump": self.input_handler.key_binds["jump"],
@@ -105,8 +139,8 @@ class Player(pygame.sprite.Sprite):
                     "right": self.input_handler.key_binds["down"]
                 }
 
-        elif self.input_handler.controller != "keyboard":
-            if self.flying:
+        elif self.input_handler and self.input_handler.controller != "keyboard":
+            if self.is_flying():
                 # Free movement – direct mapping
                 self.controls = {
                     "jump": self.input_handler.key_binds["jump"],
@@ -178,7 +212,7 @@ class Player(pygame.sprite.Sprite):
                 else:
                     self.location.y += -self.speed
 
-        elif self.flying:
+        elif self.is_flying():
             if keys["up"]:
                 self.location.y += -self.speed
             if keys["down"]:
@@ -260,7 +294,7 @@ class Player(pygame.sprite.Sprite):
 
         # === Update on_ground status based on gravity ===
         self.on_ground = False  # Reset to default
-        if not self.flying:
+        if not self.is_flying():
             check_offset = pygame.Vector2(self.gravity).normalize()
             check_rect = self.rect.move(round(check_offset.x), round(check_offset.y))
 
@@ -273,11 +307,21 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.future_rect.copy()
 
     def draw(self, surface, camera):
-        zoomed_rect = pygame.Rect(
-            (self.rect.x - camera.x) * camera.zoom,
-            (self.rect.y - camera.y) * camera.zoom,
-            self.rect.width * camera.zoom,
-            self.rect.height * camera.zoom
+        self.display_rect.center = self.rect.center
+        adjusted_display_rect = pygame.Rect(
+            (self.display_rect.x - camera.x) * camera.zoom,
+            (self.display_rect.y - camera.y) * camera.zoom,
+            self.display_rect.width * camera.zoom,
+            self.display_rect.height * camera.zoom
         )
-        scaled_image = pygame.transform.scale(self.image, zoomed_rect.size)
-        surface.blit(scaled_image, zoomed_rect)
+        scaled_image = pygame.transform.scale(self.image, adjusted_display_rect.size)
+        surface.blit(scaled_image, adjusted_display_rect)
+
+        if self.debug:
+            adjusted_collision_rect = pygame.Rect(
+                (self.rect.x - camera.x) * camera.zoom,
+                (self.rect.y - camera.y) * camera.zoom,
+                self.rect.width * camera.zoom,
+                self.rect.height * camera.zoom
+            )
+            pygame.draw.rect(surface, (0, 0, 0), adjusted_collision_rect, 1)
