@@ -23,7 +23,7 @@ def load_level(app_state, grid_size, player_count, world, level, retry_count=0):
                 block.color = block_data["color"]
                 block.add(app_state.game_sprites["blocks"])
             for player_data in data["players"]:
-                player = Player((player_data["x"], player_data["y"]), (player_data["width"], player_data["height"]))
+                player = Player((player_data["x"], player_data["y"]))
                 player.color = player_data["color"]
                 player.add(app_state.game_sprites["players"])
 

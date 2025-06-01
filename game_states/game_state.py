@@ -20,7 +20,7 @@ class GameState(BaseState):
         self.load_input_handlers()
 
         self.load_controllers_event = pygame.USEREVENT + 1
-        pygame.time.set_timer(self.load_controllers_event, 10000)
+        pygame.time.set_timer(self.load_controllers_event, 1000)
 
     def load_input_handlers(self):
         if self.controllers is None:
@@ -52,12 +52,9 @@ class GameState(BaseState):
         # Remove deactivated controller's input_handlers
         for input_handler in self.input_handlers:
             if not input_handler.controller == "keyboard":
-                try:
-                    if not input_handler.controller.attached():
-                        self.input_handlers.remove(input_handler)
-                        input_handler.controller.quit()
-                except Exception as e:
-                    print(e)
+                if not input_handler.controller.get_init():
+                    input_handler.player.input_handler = None
+                    input_handler.player = None
                     self.input_handlers.remove(input_handler)
                     input_handler.controller.quit()
 
@@ -73,33 +70,50 @@ class GameState(BaseState):
                 if event.key == pygame.K_ESCAPE:
                     self.next_transitions = [StateTransition("push", "menu", {"submenu": "game_pause"})]
 
-            # On input, assign the input handler to the player and player to input handler
+            # On input, assign unassigned player to input handler and vice versa
             for input_handler in self.input_handlers:
+                if input_handler.player:
+                    continue
+
                 user_input = input_handler.get_input()
+
+                if all(not value for value in user_input.values()):
+                    continue
                 for value in user_input.values():
                     if value:
                         for player in self.game_sprites["players"]:
                             if not player.input_handler:
-                                input_handler.player = self.game_sprites["players"].sprites()[0]
-                                input_handler.player.input_handler = input_handler
+                                input_handler.player = player
+                                player.input_handler = input_handler
+                                break
+                        break
 
     def load_level(self, player_count, world, level):
         load_level(self, self.context["grid_size"], player_count, world, level)
+        self.controllers = None
+        self.input_handlers = None
+        self.load_input_handlers()
 
     def save_level(self):
         pass
 
     def update(self, delta_time):
+        # Calculate next positions
         for player in self.game_sprites["players"].sprites():
-            player.calc_next_pos(self.game_sprites["blocks"].sprites())
+            player.calc_next_pos(delta_time, self.game_sprites["blocks"].sprites() + self.game_sprites["players"].sprites())
 
+        # Move players
         for player in self.game_sprites["players"].sprites():
             player.apply_next_pos()
             if player.input_handler:
-                player.apply_input()
+                player.apply_input(delta_time)
 
         if len(self.game_sprites["players"].sprites()) > 0:
-            self.camera.move_center_to(self.game_sprites["players"].sprites()[0].rect.center)
+            center_of_all_players = pygame.Vector2(0, 0)
+            for player in self.game_sprites["players"].sprites():
+                center_of_all_players += player.rect.center
+            center_of_all_players /= len(self.game_sprites["players"].sprites())
+            self.camera.move_center_to(center_of_all_players)
 
     def render(self, screen):
         screen.fill("light blue")
