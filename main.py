@@ -125,7 +125,7 @@ class GameApp:
     def _update(self):
         caption = f"{int(self.clock.get_fps()):02d} FPS"
         pygame.display.set_caption(caption)
-        time_delta = self.clock.tick(5000) / 1000.0
+        time_delta = self.clock.tick(60) / 1000.0
         self.state_stack[-1].update(time_delta)
 
     def _render(self):
