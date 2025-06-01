@@ -4,13 +4,12 @@ import pygame
 # Requires handle_input() (every frame) and handle_zoom() (on mouse scroll event)
 
 
-
 class Camera:
     def __init__(self, screen_size, controls=dict(up=pygame.K_UP, down=pygame.K_DOWN, left=pygame.K_LEFT, right=pygame.K_RIGHT)):
         self.x = 0
         self.y = 0
         self.speed = 10
-        self.zoom = 1.222
+        self.zoom = 2
         self.min_zoom = 0.3
         self.max_zoom = 10
         self.pan_start_location = None

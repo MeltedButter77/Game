@@ -36,24 +36,26 @@ class InputHandler:
         }
 
         if self.controller == "keyboard":
-            keys = pygame.key.get_pressed()  # Get active keyboard state
-            controls["jump"] = keys[self.key_binds["jump"]]
-            controls["up"] = keys[self.key_binds["up"]]
-            controls["down"] = keys[self.key_binds["down"]]
-            controls["left"] = keys[self.key_binds["left"]]
-            controls["right"] = keys[self.key_binds["right"]]
-            return controls
+            pressed = pygame.key.get_pressed()
+            controls["jump"] = pressed[self.key_binds["jump"]]
+            controls["up"] = pressed[self.key_binds["up"]]
+            controls["down"] = pressed[self.key_binds["down"]]
+            controls["left"] = pressed[self.key_binds["left"]]
+            controls["right"] = pressed[self.key_binds["right"]]
+        else:
+            if not self.controller.get_init():
+                return None
 
-        elif self.controller:
-            if self.controller.get_button(self.key_binds["jump"]):
-                controls["jump"] = True
-            if self.controller.get_axis(self.key_binds["left_y_axis"]) < -self.axis_threshold:
-                controls["up"] = True
-            if self.controller.get_axis(self.key_binds["left_y_axis"]) > self.axis_threshold:
-                controls["down"] = True
-            if self.controller.get_axis(self.key_binds["left_x_axis"]) < -self.axis_threshold:
-                controls["left"] = True
-            if self.controller.get_axis(self.key_binds["left_x_axis"]) > self.axis_threshold:
-                controls["right"] = True
+            # Get axis values (left analog stick)
+            axis_x = self.controller.get_axis(self.key_binds["left_x_axis"])
+            axis_y = self.controller.get_axis(self.key_binds["left_y_axis"])
+            # Button press
+            controls["jump"] = self.controller.get_button(self.key_binds["jump"])
+
+            # Convert analog input to digital-style booleans
+            controls["left"] = axis_x < -self.axis_threshold
+            controls["right"] = axis_x > self.axis_threshold
+            controls["up"] = axis_y < -self.axis_threshold
+            controls["down"] = axis_y > self.axis_threshold
 
         return controls

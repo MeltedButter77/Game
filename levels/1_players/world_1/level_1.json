@@ -8,34 +8,6 @@
             "color": "blue"
         },
         {
-            "x": 256,
-            "y": 432,
-            "width": 112,
-            "height": 16,
-            "color": "blue"
-        },
-        {
-            "x": 400,
-            "y": 400,
-            "width": 144,
-            "height": 16,
-            "color": "blue"
-        },
-        {
-            "x": 592,
-            "y": 352,
-            "width": 160,
-            "height": 16,
-            "color": "blue"
-        },
-        {
-            "x": 784,
-            "y": 400,
-            "width": 96,
-            "height": 16,
-            "color": "blue"
-        },
-        {
             "x": 1008,
             "y": 432,
             "width": 176,
@@ -69,14 +41,112 @@
             "width": 1792,
             "height": 176,
             "color": "blue"
+        },
+        {
+            "x": 16,
+            "y": 336,
+            "width": 208,
+            "height": 64,
+            "color": "blue"
+        },
+        {
+            "x": 256,
+            "y": 448,
+            "width": 112,
+            "height": 32,
+            "color": "blue"
+        },
+        {
+            "x": 400,
+            "y": 416,
+            "width": 144,
+            "height": 32,
+            "color": "blue"
+        },
+        {
+            "x": 224,
+            "y": 352,
+            "width": 32,
+            "height": 48,
+            "color": "blue"
+        },
+        {
+            "x": 272,
+            "y": 384,
+            "width": 80,
+            "height": 32,
+            "color": "blue"
+        },
+        {
+            "x": 576,
+            "y": 384,
+            "width": 176,
+            "height": 32,
+            "color": "blue"
+        },
+        {
+            "x": 656,
+            "y": 320,
+            "width": 144,
+            "height": 32,
+            "color": "blue"
+        },
+        {
+            "x": 752,
+            "y": 352,
+            "width": 32,
+            "height": 64,
+            "color": "blue"
+        },
+        {
+            "x": 512,
+            "y": 448,
+            "width": 176,
+            "height": 32,
+            "color": "blue"
+        },
+        {
+            "x": 784,
+            "y": 400,
+            "width": 96,
+            "height": 32,
+            "color": "blue"
+        },
+        {
+            "x": 720,
+            "y": 416,
+            "width": 64,
+            "height": 32,
+            "color": "blue"
+        },
+        {
+            "x": 800,
+            "y": 320,
+            "width": 32,
+            "height": 80,
+            "color": "blue"
+        },
+        {
+            "x": 464,
+            "y": 320,
+            "width": 128,
+            "height": 32,
+            "color": "blue"
         }
     ],
     "players": [
         {
-            "x": 100,
-            "y": 0,
-            "width": 50,
-            "height": 50,
+            "x": 30,
+            "y": -82,
+            "width": 21,
+            "height": 32,
+            "color": "red"
+        },
+        {
+            "x": 80,
+            "y": -82,
+            "width": 21,
+            "height": 32,
             "color": "red"
         }
     ]
