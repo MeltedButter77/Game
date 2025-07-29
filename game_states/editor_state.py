@@ -125,9 +125,8 @@ class EditorState(BaseState):
                     {
                         "x": player.rect.x,
                         "y": player.rect.y,
-                        "width": player.rect.width,
-                        "height": player.rect.height,
-                        "color": "red"
+                        "color": player.color,
+                        "gravity": player.gravity
                     }
                     for player in self.game_sprites["players"]
                 ],

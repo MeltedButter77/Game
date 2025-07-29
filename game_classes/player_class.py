@@ -3,7 +3,7 @@ import pygame
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, position):
+    def __init__(self, position, color, gravity="down"):
         """Initialize a Player sprite with movement, gravity and input handling capabilities.
         
         Args:
@@ -11,14 +11,14 @@ class Player(pygame.sprite.Sprite):
             size: (width, height) tuple for sprite size
         """
         super().__init__()
-        size = (32, 32)
+        image_size = (32, 32)
 
         # === Core Sprite Attributes ===
         self.image = pygame.image.load("assets/player.png")  # .convert_alpha()
-        self.image = pygame.transform.scale(self.image, size)
+        self.image = pygame.transform.scale(self.image, image_size)
         self.unrotated_image = self.image.copy()
 
-        self.collision_box_size = pygame.Vector2((size[0], size[1] * 2 / 3))  # base size for collision rects
+        self.collision_box_size = pygame.Vector2((image_size[0], image_size[1] * 2 / 3))  # base size for collision rects
         self.rect = pygame.Rect((0, 0), self.collision_box_size)
         self.rect.center = position
         self.future_rect = self.rect.copy()  # Used for collision prediction or pathing
@@ -27,13 +27,14 @@ class Player(pygame.sprite.Sprite):
         self.speed = 180  # Movement speed
         self.jump_power = 320  # Jump height
         self.gravity_strength = 1300
+        self.color = color
 
         # === Input Handling ===
         self.input_handler = None
         self.controls = None
 
         # === Gravity ===
-        self.update_gravity_direction("down")  # Will change controls and collision rects'
+        self.update_gravity_direction(gravity)  # Will change controls and collision rects'
 
         # === Dynamic State ===
         self.location = pygame.Vector2(self.rect.x, self.rect.y)  # Sub-pixel location tracking
@@ -80,129 +81,32 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = old_center
         self.future_rect = self.rect.copy()
 
-        # Load updated controls based on new gravity
-        self.load_controls()
-
-    def load_controls(self):
-        # Loads self.controls based on input handler and gravity
-        # Basically sets each bind (the keys) to a key value chosen by the input handler
-        if self.input_handler is None:
-            return
-
-        if self.input_handler == "keyboard":
-            if self.is_flying():
-                # Free movement – direct mapping
-                self.controls = {
-                    "jump": self.input_handler.key_binds["jump"],
-                    "up": self.input_handler.key_binds["up"],
-                    "down": self.input_handler.key_binds["down"],
-                    "left": self.input_handler.key_binds["left"],
-                    "right": self.input_handler.key_binds["right"]
-                }
-            elif self.gravity.y < 0:
-                # Gravity pulls upward – jump is down key
-                self.controls = {
-                    "jump": self.input_handler.key_binds["jump"],
-                    "up": self.input_handler.key_binds["down"],
-                    "down": self.input_handler.key_binds["up"],
-                    "left": self.input_handler.key_binds["left"],
-                    "right": self.input_handler.key_binds["right"]
-                }
-            elif self.gravity.y > 0:
-                # Gravity pulls downward – jump is up key
-                self.controls = {
-                    "jump": self.input_handler.key_binds["jump"],
-                    "up": self.input_handler.key_binds["up"],
-                    "down": self.input_handler.key_binds["down"],
-                    "left": self.input_handler.key_binds["left"],
-                    "right": self.input_handler.key_binds["right"]
-                }
-            elif self.gravity.x < 0:
-                # Gravity pulls left – jump is right key
-                self.controls = {
-                    "jump": self.input_handler.key_binds["jump"],
-                    "up": self.input_handler.key_binds["right"],
-                    "down": self.input_handler.key_binds["left"],
-                    "left": self.input_handler.key_binds["up"],
-                    "right": self.input_handler.key_binds["down"]
-                }
-            elif self.gravity.x > 0:
-                # Gravity pulls right – jump is left key
-                self.controls = {
-                    "jump": self.input_handler.key_binds["jump"],
-                    "up": self.input_handler.key_binds["left"],
-                    "down": self.input_handler.key_binds["right"],
-                    "left": self.input_handler.key_binds["up"],
-                    "right": self.input_handler.key_binds["down"]
-                }
-
-        elif self.input_handler and self.input_handler.controller != "keyboard":
-            if self.is_flying():
-                # Free movement – direct mapping
-                self.controls = {
-                    "jump": self.input_handler.key_binds["jump"],
-                    "up": self.input_handler.key_binds["left_y_axis"],
-                    "down": self.input_handler.key_binds["left_y_axis"],
-                    "left": self.input_handler.key_binds["left_x_axis"],
-                    "right": self.input_handler.key_binds["left_x_axis"]
-                }
-            elif self.gravity.y < 0:
-                self.controls = {
-                    "jump": self.input_handler.key_binds["jump"],
-                    "up": self.input_handler.key_binds["left_y_axis"],
-                    "down": self.input_handler.key_binds["left_y_axis"],
-                    "left": self.input_handler.key_binds["left_x_axis"],
-                    "right": self.input_handler.key_binds["left_x_axis"]
-                }
-            elif self.gravity.y > 0:
-                self.controls = {
-                    "jump": self.input_handler.key_binds["jump"],
-                    "up": self.input_handler.key_binds["left_y_axis"],
-                    "down": self.input_handler.key_binds["left_y_axis"],
-                    "left": self.input_handler.key_binds["left_x_axis"],
-                    "right": self.input_handler.key_binds["left_x_axis"]
-                }
-            elif self.gravity.x < 0:
-                self.controls = {
-                    "jump": self.input_handler.key_binds["jump"],
-                    "up": self.input_handler.key_binds["left_x_axis"],
-                    "down": self.input_handler.key_binds["left_x_axis"],
-                    "left": self.input_handler.key_binds["left_y_axis"],
-                    "right": self.input_handler.key_binds["left_y_axis"]
-                }
-            elif self.gravity.x > 0:
-                self.controls = {
-                    "jump": self.input_handler.key_binds["jump"],
-                    "up": self.input_handler.key_binds["left_x_axis"],
-                    "down": self.input_handler.key_binds["left_x_axis"],
-                    "left": self.input_handler.key_binds["left_y_axis"],
-                    "right": self.input_handler.key_binds["left_y_axis"]
-                }
-
     def apply_input(self, delta_time):
         if not self.input_handler:
             return
-        if not self.controls:
-            # Load controls based on input handler and gravity
-            self.load_controls()
 
-        keys = self.input_handler.get_input()
-        if not keys:
+        inputs = self.input_handler.get_input()
+        if not inputs:
             return
 
+        # Rotate inputs for gravity for controller players
+        if not isinstance(self.input_handler.joystick, str):
+            if self.gravity.x != 0 and self.gravity is not None:
+                inputs["left"], inputs["right"] = inputs["up"], inputs["down"]
+
         if self.gravity:
-            if keys["jump"] and self.on_ground:
+            if inputs["jump"] and self.on_ground:
                 if abs(self.gravity.y) > 0:
                     self.velocity.y = -self.jump_power * math.copysign(1, self.gravity.y)
                 else:
                     self.velocity.x = -self.jump_power * math.copysign(1, self.gravity.x)
             # Handle horizontal movement with priority to the first pressed direction
-            if keys["right"] and not keys["left"]:
+            if inputs["right"] and not inputs["left"]:
                 if abs(self.gravity.y) > 0:
                     self.location.x += self.speed * delta_time
                 else:
                     self.location.y += self.speed * delta_time
-            elif keys["left"] and not keys["right"]:
+            elif inputs["left"] and not inputs["right"]:
                 if abs(self.gravity.y) > 0:
                     self.location.x -= self.speed * delta_time
                 else:
@@ -210,15 +114,15 @@ class Player(pygame.sprite.Sprite):
 
         elif self.is_flying():
             # Handle vertical movement with priority to the first pressed direction
-            if keys["up"] and not keys["down"]:
+            if inputs["up"] and not inputs["down"]:
                 self.location.y -= self.speed * delta_time
-            elif keys["down"] and not keys["up"]:
+            elif inputs["down"] and not inputs["up"]:
                 self.location.y += self.speed * delta_time
 
             # Handle horizontal movement with priority to the first pressed direction
-            if keys["right"] and not keys["left"]:
+            if inputs["right"] and not inputs["left"]:
                 self.location.x += self.speed * delta_time
-            elif keys["left"] and not keys["right"]:
+            elif inputs["left"] and not inputs["right"]:
                 self.location.x -= self.speed * delta_time
 
     def calc_next_pos(self, delta_time, sprites):

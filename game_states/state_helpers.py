@@ -18,12 +18,11 @@ def load_level(app_state, grid_size, player_count, world, level, retry_count=0):
             app_state.game_sprites = {"blocks": pygame.sprite.Group(), "players": pygame.sprite.Group()}
 
             for block_data in data["blocks"]:
-                block = Block(grid_size,
-                              pygame.Rect(block_data["x"], block_data["y"], block_data["width"], block_data["height"]))
+                block = Block(grid_size, pygame.Rect(block_data["x"], block_data["y"], block_data["width"], block_data["height"]))
                 block.color = block_data["color"]
                 block.add(app_state.game_sprites["blocks"])
             for player_data in data["players"]:
-                player = Player((player_data["x"], player_data["y"]))
+                player = Player((player_data["x"], player_data["y"]), player_data["color"], player_data["gravity"])
                 player.color = player_data["color"]
                 player.add(app_state.game_sprites["players"])
 

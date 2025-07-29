@@ -14,15 +14,9 @@ import pygame_gui
 from game_states.editor_state import EditorState
 from game_states.menu_state import MenuState
 from game_states.game_state import GameState
+from game_classes.input_handler import InputHandler
 
 WIDTH, HEIGHT = 1280, 720  # Use 320x180 or multiples
-
-
-class StateTransition:
-    def __init__(self, type_=None, target=None, data=None):
-        self.type = type_  # "push", "pop", "switch", "quit"
-        self.target = target  # "editor", "menu"
-        self.data = data or {}  # Optional extra info
 
 
 class GameApp:
@@ -38,6 +32,7 @@ class GameApp:
         self.game_context = {
             "ui_manager": pygame_gui.UIManager((WIDTH, HEIGHT)),
             "screen_size": (WIDTH, HEIGHT),
+            "input_handlers": [],
             "grid_size": 16
         }
         self.state_instances = {
@@ -47,6 +42,35 @@ class GameApp:
         }
         self.state_stack = [self.state_instances["menu"]]
         self.running = True
+
+        # Load input handlers, no inputs can be added after
+        self.load_input_handlers()
+
+    def load_input_handlers(self):
+        self.game_context["input_handlers"] = []
+        for joystick in [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]:
+            print(f"Joystick {joystick.get_instance_id()}: {joystick.get_name()}")
+
+            has_handler = False
+            # Check if joystick has a handler, if not add it
+            for handler in self.game_context["input_handlers"]:
+                if handler.joystick:
+                    if joystick.get_instance_id() == handler.joystick.get_instance_id():
+                        has_handler = True
+            if not has_handler:
+                self.game_context["input_handlers"].append(InputHandler(joystick))
+
+        self.game_context["input_handlers"].append(InputHandler("keyboard_1"))
+        self.game_context["input_handlers"].append(InputHandler("keyboard_2"))
+
+        # Log input handlers
+        print("Total input handlers:", len(self.game_context["input_handlers"]))
+        for handler in self.game_context["input_handlers"]:
+            if not isinstance(handler.joystick, str):
+                print(handler.joystick.get_name())
+            else:
+                print(handler.joystick)
+        print(self.game_context["input_handlers"])
 
     async def run(self):
         while self.running:

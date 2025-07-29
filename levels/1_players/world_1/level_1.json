@@ -139,22 +139,48 @@
             "width": 1872,
             "height": 96,
             "color": "blue"
+        },
+        {
+            "x": 592,
+            "y": -240,
+            "width": 288,
+            "height": 32,
+            "color": "blue"
+        },
+        {
+            "x": 592,
+            "y": -208,
+            "width": 32,
+            "height": 176,
+            "color": "blue"
+        },
+        {
+            "x": 624,
+            "y": -80,
+            "width": 256,
+            "height": 32,
+            "color": "blue"
+        },
+        {
+            "x": 880,
+            "y": -224,
+            "width": 32,
+            "height": 160,
+            "color": "blue"
         }
     ],
     "players": [
         {
-            "x": 680,
-            "y": -130,
-            "width": 21,
-            "height": 32,
-            "color": "red"
+            "x": 670,
+            "y": -146,
+            "color": "red",
+            "gravity": "left"
         },
         {
-            "x": 780,
-            "y": -130,
-            "width": 21,
-            "height": 32,
-            "color": "red"
+            "x": 770,
+            "y": -146,
+            "color": "red",
+            "gravity": "down"
         }
     ]
 }
