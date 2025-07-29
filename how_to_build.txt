@@ -1,5 +1,8 @@
-For web using PygBag
+For web using PygBag in master branch
 pygbag --build your_project_folder
+
+For web hosted on pages (build to pages branch)
+run workflow pygbag.yml
 
 For a .exe
 pyinstaller main.spec
