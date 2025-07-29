@@ -34,7 +34,9 @@ class Player(pygame.sprite.Sprite):
         self.controls = None
 
         # === Gravity ===
-        self.update_gravity_direction(gravity)  # Will change controls and collision rects'
+        self.gravity_vector = pygame.Vector2(0, 0)
+        self.gravity_direction = None
+        self.update_gravity_direction(gravity)  # loaded input will change gravity_direction and gravity_vector
 
         # === Dynamic State ===
         self.location = pygame.Vector2(self.rect.x, self.rect.y)  # Sub-pixel location tracking
@@ -42,9 +44,10 @@ class Player(pygame.sprite.Sprite):
         self.on_ground = False  # For gravity/jumping logic
 
     def is_flying(self):
-        return self.gravity.length() == 0
+        return self.gravity_vector.length() == 0
 
     def update_gravity_direction(self, direction=None):
+        self.gravity_direction = direction
         gravity_vectors = {
             "up": (0, -self.gravity_strength),
             "down": (0, self.gravity_strength),
@@ -53,26 +56,26 @@ class Player(pygame.sprite.Sprite):
             None: (0, 0)
         }
 
-        self.gravity = pygame.Vector2(*gravity_vectors.get(direction, (0, 0)))
+        self.gravity_vector = pygame.Vector2(*gravity_vectors.get(direction, (0, 0)))
 
-        if abs(self.gravity.x) > 0 and abs(self.gravity.y) > 0:
+        if abs(self.gravity_vector.x) > 0 and abs(self.gravity_vector.y) > 0:
             raise ValueError("Gravity must be horizontal, vertical, or zero, not diagonal.")
-        if self.gravity.length_squared() > self.gravity_strength:
-            self.gravity = self.gravity.normalize() * self.gravity_strength
+        if self.gravity_vector.length_squared() > self.gravity_strength:
+            self.gravity_vector = self.gravity_vector.normalize() * self.gravity_strength
 
         # Handle rotation
-        if self.gravity.x < 0:  # Left
+        if self.gravity_vector.x < 0:  # Left
             self.image = pygame.transform.rotate(self.unrotated_image, -90)
-        elif self.gravity.x > 0:  # Right
+        elif self.gravity_vector.x > 0:  # Right
             self.image = pygame.transform.rotate(self.unrotated_image, 90)
-        elif self.gravity.y < 0:  # Up
+        elif self.gravity_vector.y < 0:  # Up
             self.image = pygame.transform.flip(self.unrotated_image, False, True)
-        elif self.gravity.y > 0:  # Down
+        elif self.gravity_vector.y > 0:  # Down
             self.image = self.unrotated_image.copy()
 
         # Set proper collision box dimensions based on gravity
         width, height = self.collision_box_size
-        if self.gravity.x == 0:  # Horizontal gravity -> wider hitbox
+        if self.gravity_vector.x == 0:  # Horizontal gravity -> wider hitbox
             width, height = height, width
 
         # Preserve center position when adjusting rect
@@ -91,23 +94,23 @@ class Player(pygame.sprite.Sprite):
 
         # Rotate inputs for gravity for controller players
         if not isinstance(self.input_handler.joystick, str):
-            if self.gravity.x != 0 and self.gravity is not None:
+            if self.gravity_vector.x != 0 and self.gravity_vector is not None:
                 inputs["left"], inputs["right"] = inputs["up"], inputs["down"]
 
-        if self.gravity:
+        if self.gravity_vector:
             if inputs["jump"] and self.on_ground:
-                if abs(self.gravity.y) > 0:
-                    self.velocity.y = -self.jump_power * math.copysign(1, self.gravity.y)
+                if abs(self.gravity_vector.y) > 0:
+                    self.velocity.y = -self.jump_power * math.copysign(1, self.gravity_vector.y)
                 else:
-                    self.velocity.x = -self.jump_power * math.copysign(1, self.gravity.x)
+                    self.velocity.x = -self.jump_power * math.copysign(1, self.gravity_vector.x)
             # Handle horizontal movement with priority to the first pressed direction
             if inputs["right"] and not inputs["left"]:
-                if abs(self.gravity.y) > 0:
+                if abs(self.gravity_vector.y) > 0:
                     self.location.x += self.speed * delta_time
                 else:
                     self.location.y += self.speed * delta_time
             elif inputs["left"] and not inputs["right"]:
-                if abs(self.gravity.y) > 0:
+                if abs(self.gravity_vector.y) > 0:
                     self.location.x -= self.speed * delta_time
                 else:
                     self.location.y -= self.speed * delta_time
@@ -126,7 +129,7 @@ class Player(pygame.sprite.Sprite):
                 self.location.x -= self.speed * delta_time
 
     def calc_next_pos(self, delta_time, sprites):
-        self.velocity += self.gravity * delta_time
+        self.velocity += self.gravity_vector * delta_time
 
         # Update location
         self.location.x += self.velocity.x * delta_time
@@ -220,7 +223,7 @@ class Player(pygame.sprite.Sprite):
         # === Update on_ground status based on gravity ===
         self.on_ground = False  # Reset to default
         if not self.is_flying():
-            check_offset = pygame.Vector2(self.gravity).normalize()
+            check_offset = pygame.Vector2(self.gravity_vector).normalize()
             check_rect = self.rect.move(round(check_offset.x), round(check_offset.y))
 
             for rect in rect_list:
